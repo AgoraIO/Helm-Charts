@@ -1,0 +1,200 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "egress-server.fullname" . }}
+  labels:
+    {{- include "egress-server.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "egress-server.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      labels:
+        {{- include "egress-server.selectorLabels" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "egress-server.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      {{- with .Values.initContainers }}
+      initContainers:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.global.imageRegistry | default .Values.image.registry }}/{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: api
+              containerPort: {{ .Values.server.apiPort }}
+              protocol: TCP
+            - name: health
+              containerPort: {{ .Values.server.healthPort }}
+              protocol: TCP
+            - name: canvas
+              containerPort: {{ .Values.server.canvasTemplatePort }}
+              protocol: TCP
+          livenessProbe:
+            {{- toYaml .Values.livenessProbe | nindent 12 }}
+          readinessProbe:
+            {{- toYaml .Values.readinessProbe | nindent 12 }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          env:
+            # Agora Configuration
+            - name: APP_ID
+              value: {{ .Values.agora.appId | quote }}
+            {{- if .Values.agora.accessToken }}
+            - name: ACCESS_TOKEN
+              value: {{ .Values.agora.accessToken | quote }}
+            {{- end }}
+            {{- if .Values.agora.channelName }}
+            - name: CHANNEL_NAME
+              value: {{ .Values.agora.channelName | quote }}
+            {{- end }}
+            - name: EGRESS_UID
+              value: {{ .Values.agora.egressUid | quote }}
+            
+            # Redis Configuration
+            {{- if .Values.redis.external.enabled }}
+            - name: REDIS_ADDR
+              value: "{{ .Values.redis.external.host }}:{{ .Values.redis.external.port }}"
+            {{- if .Values.redis.external.password }}
+            - name: REDIS_PASSWORD
+              value: {{ .Values.redis.external.password | quote }}
+            {{- end }}
+            - name: REDIS_DB
+              value: {{ .Values.redis.external.database | quote }}
+            {{- end }}
+            
+            # Server Configuration
+            - name: GIN_MODE
+              value: {{ .Values.server.ginMode | quote }}
+            - name: API_PORT
+              value: {{ .Values.server.apiPort | quote }}
+            - name: HEALTH_PORT
+              value: {{ .Values.server.healthPort | quote }}
+            - name: CANVAS_TEMPLATE_PORT
+              value: {{ .Values.server.canvasTemplatePort | quote }}
+            - name: LOG_LEVEL
+              value: {{ .Values.server.logLevel | quote }}
+            
+            # Pod Configuration
+            {{- if .Values.pod.region }}
+            - name: POD_REGION
+              value: {{ .Values.pod.region | quote }}
+            {{- end }}
+            - name: POD_WORKERS
+              value: {{ .Values.pod.workers | quote }}
+            
+            # Recording Configuration
+            - name: RECORDING_ENABLED
+              value: {{ .Values.recording.enabled | quote }}
+            {{- if .Values.recording.enabled }}
+            - name: RECORDING_FORMAT
+              value: {{ .Values.recording.format | quote }}
+            - name: VIDEO_WIDTH
+              value: {{ .Values.recording.video.width | quote }}
+            - name: VIDEO_HEIGHT
+              value: {{ .Values.recording.video.height | quote }}
+            - name: VIDEO_FPS
+              value: {{ .Values.recording.video.fps | quote }}
+            - name: VIDEO_BITRATE
+              value: {{ .Values.recording.video.bitrate | quote }}
+            {{- end }}
+            
+            # S3 Configuration
+            {{- if .Values.s3.enabled }}
+            - name: S3_BUCKET
+              value: {{ .Values.s3.bucket | quote }}
+            - name: S3_REGION
+              value: {{ .Values.s3.region | quote }}
+            {{- if .Values.s3.accessKey }}
+            - name: AWS_ACCESS_KEY_ID
+              value: {{ .Values.s3.accessKey | quote }}
+            {{- end }}
+            {{- if .Values.s3.secretKey }}
+            - name: AWS_SECRET_ACCESS_KEY
+              value: {{ .Values.s3.secretKey | quote }}
+            {{- end }}
+            {{- end }}
+            
+            # Additional custom environment variables
+            {{- range .Values.env }}
+            - name: {{ .name }}
+              value: {{ .value | quote }}
+            {{- end }}
+          
+          {{- with .Values.envFrom }}
+          envFrom:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          
+          volumeMounts:
+            - name: config
+              mountPath: /opt/ag_egress/config
+              readOnly: true
+            {{- if .Values.persistence.enabled }}
+            - name: recordings
+              mountPath: {{ .Values.persistence.recordings.mountPath }}
+            - name: snapshots
+              mountPath: {{ .Values.persistence.snapshots.mountPath }}
+            - name: logs
+              mountPath: {{ .Values.persistence.logs.mountPath }}
+            {{- end }}
+            {{- with .Values.extraVolumeMounts }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+        
+        {{- with .Values.sidecars }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      
+      volumes:
+        - name: config
+          configMap:
+            name: {{ include "egress-server.fullname" . }}-config
+        {{- if .Values.persistence.enabled }}
+        - name: recordings
+          persistentVolumeClaim:
+            claimName: {{ include "egress-server.fullname" . }}-recordings
+        - name: snapshots
+          persistentVolumeClaim:
+            claimName: {{ include "egress-server.fullname" . }}-snapshots
+        - name: logs
+          persistentVolumeClaim:
+            claimName: {{ include "egress-server.fullname" . }}-logs
+        {{- end }}
+        {{- with .Values.extraVolumes }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

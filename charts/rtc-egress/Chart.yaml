@@ -1,0 +1,27 @@
+apiVersion: v2
+name: rtc-egress
+description: Agora RTC Egress Server - Real-time video recording and snapshot service
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+home: https://github.com/AgoraIO/RTC-Egress
+sources:
+  - https://github.com/AgoraIO/RTC-Egress
+maintainers:
+  - name: AgoraIO Team
+    email: developer@agora.io
+    url: https://agora.io
+keywords:
+  - agora
+  - rtc
+  - egress
+  - video
+  - recording
+  - streaming
+annotations:
+  category: Media
+  licenses: Apache-2.0
+  images: |
+    - name: egress-server
+      image: ghcr.io/AgoraIO/RTC-Egress:latest
+dependencies: []
