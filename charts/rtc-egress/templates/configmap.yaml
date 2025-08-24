@@ -1,0 +1,132 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "egress-server.fullname" . }}-config
+  labels:
+    {{- include "egress-server.labels" . | nindent 4 }}
+data:
+  egress_config.yaml: |
+    # Agora App ID and Token
+    app_id: {{ .Values.agora.appId | quote }}
+    {{- if .Values.agora.channelName }}
+    channel_name: {{ .Values.agora.channelName | quote }}
+    {{- else }}
+    channel_name: "egress_test"
+    {{- end }}
+    {{- if .Values.agora.accessToken }}
+    access_token: {{ .Values.agora.accessToken | quote }}
+    {{- else }}
+    access_token: "YOUR_AGORA_CHANNEL_TOKEN"
+    {{- end }}
+    egress_uid: {{ .Values.agora.egressUid | quote }}
+
+    egress_home: "/tmp/egress"
+
+    # Server configuration
+    health_port: {{ .Values.server.healthPort }}
+    api_port: {{ .Values.server.apiPort }}
+    canvas_template_port: {{ .Values.server.canvasTemplatePort }}
+
+    # Redis Configuration
+    redis:
+      {{- if .Values.redis.external.enabled }}
+      addr: "{{ .Values.redis.external.host }}:{{ .Values.redis.external.port }}"
+      {{- if .Values.redis.external.password }}
+      password: {{ .Values.redis.external.password | quote }}
+      {{- else }}
+      password: ""
+      {{- end }}
+      db: {{ .Values.redis.external.database }}
+      {{- else }}
+      addr: "localhost:6379"
+      password: ""
+      db: 0
+      {{- end }}
+      task_ttl: 172800
+      worker_patterns:
+        - "egress:snapshot:*"
+        - "egress:record:*"
+
+    # Pod Configuration
+    pod:
+      {{- if .Values.pod.region }}
+      region: {{ .Values.pod.region | quote }}
+      {{- else }}
+      region: ""
+      {{- end }}
+      workers: {{ .Values.pod.workers }}
+
+    {{- if .Values.s3.enabled }}
+    # S3 Configuration
+    s3:
+      bucket: {{ .Values.s3.bucket | quote }}
+      region: {{ .Values.s3.region | quote }}
+      {{- if .Values.s3.accessKey }}
+      access_key: {{ .Values.s3.accessKey | quote }}
+      {{- end }}
+      {{- if .Values.s3.secretKey }}
+      secret_key: {{ .Values.s3.secretKey | quote }}
+      {{- end }}
+      {{- if .Values.s3.endpoint }}
+      endpoint: {{ .Values.s3.endpoint | quote }}
+      {{- end }}
+    {{- end }}
+
+    # Snapshots settings
+    snapshots:
+      output_dir: {{ .Values.snapshots.outputDir | quote }}
+      width: {{ .Values.snapshots.width }}
+      height: {{ .Values.snapshots.height }}
+      users: {{ .Values.snapshots.users | quote }}
+      layout: {{ .Values.snapshots.layout | quote }}
+      interval_in_ms: {{ .Values.snapshots.intervalInMs }}
+      quality: {{ .Values.snapshots.quality }}
+
+    # Recording settings
+    recording:
+      enabled: {{ .Values.recording.enabled }}
+      {{- if .Values.recording.enabled }}
+      output_dir: {{ .Values.recording.outputDir | quote }}
+      users: {{ .Values.recording.users | quote }}
+      layout: {{ .Values.recording.layout | quote }}
+      format: {{ .Values.recording.format | quote }}
+      max_duration_seconds: {{ .Values.recording.maxDurationSeconds }}
+
+      # Video recording settings
+      video:
+        enabled: {{ .Values.recording.video.enabled }}
+        width: {{ .Values.recording.video.width }}
+        height: {{ .Values.recording.video.height }}
+        fps: {{ .Values.recording.video.fps }}
+        bitrate: {{ .Values.recording.video.bitrate }}
+        codec: {{ .Values.recording.video.codec | quote }}
+        buffer_size: 30
+
+      # Audio recording settings
+      audio:
+        enabled: {{ .Values.recording.audio.enabled }}
+        sample_rate: {{ .Values.recording.audio.sampleRate }}
+        channels: {{ .Values.recording.audio.channels }}
+        bitrate: {{ .Values.recording.audio.bitrate }}
+        codec: {{ .Values.recording.audio.codec | quote }}
+        buffer_size: 100
+      {{- end }}
+
+    # Logging configuration
+    log:
+      level: {{ .Values.server.logLevel | quote }}
+      file: "/var/log/ag_egress/egress.log"
+      max_size: 100
+      max_backups: 3
+      max_age: 28
+
+    # Advanced settings
+    advanced:
+      video_buffer_size: 10
+      audio_buffer_size: 50
+      gpu_acceleration: false
+      thread_pool_size: 4
+      rtc_timeout: 10
+      api_timeout: 30
+      cleanup_interval: 3600
+      max_recording_age: 86400

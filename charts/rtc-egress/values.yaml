@@ -1,0 +1,252 @@
+# Default values for egress-server
+# This is a YAML-formatted file.
+
+# Global configuration
+global:
+  imageRegistry: ""
+  imagePullSecrets: []
+
+# Image configuration
+image:
+  registry: ghcr.io
+  repository: AgoraIO/RTC-Egress
+  tag: "latest"
+  pullPolicy: IfNotPresent
+
+# Service account
+serviceAccount:
+  create: true
+  name: ""
+  annotations: {}
+
+# Pod configuration
+replicaCount: 1
+
+# Pod security context
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1001
+  runAsGroup: 1001
+  fsGroup: 1001
+
+# Container security context  
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+    - ALL
+  readOnlyRootFilesystem: false
+  runAsNonRoot: true
+  runAsUser: 1001
+
+# Service configuration
+service:
+  type: ClusterIP
+  ports:
+    api:
+      port: 8080
+      targetPort: 8080
+      protocol: TCP
+    health:
+      port: 8182
+      targetPort: 8182
+      protocol: TCP
+    canvas:
+      port: 3000
+      targetPort: 3000
+      protocol: TCP
+
+# Ingress configuration
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+    # kubernetes.io/ingress.class: nginx
+    # kubernetes.io/tls-acme: "true"
+  hosts:
+    - host: egress.local
+      paths:
+        - path: /
+          pathType: Prefix
+          service:
+            name: egress-server
+            port: 8080
+  tls: []
+    # - secretName: egress-tls
+    #   hosts:
+    #     - egress.local
+
+# Resources
+resources:
+  limits:
+    cpu: 2000m
+    memory: 4Gi
+  requests:
+    cpu: 500m
+    memory: 1Gi
+
+# Node selector
+nodeSelector: {}
+
+# Tolerations
+tolerations: []
+
+# Affinity
+affinity: {}
+
+# Pod disruption budget
+podDisruptionBudget:
+  enabled: false
+  minAvailable: 1
+
+# Horizontal Pod Autoscaler
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 80
+  targetMemoryUtilizationPercentage: 80
+
+# Probes
+livenessProbe:
+  httpGet:
+    path: /health
+    port: 8182
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+readinessProbe:
+  httpGet:
+    path: /health
+    port: 8182
+  initialDelaySeconds: 5
+  periodSeconds: 5
+  timeoutSeconds: 3
+  failureThreshold: 3
+
+# Persistent volumes
+persistence:
+  enabled: true
+  recordings:
+    storageClass: ""
+    accessMode: ReadWriteOnce
+    size: 100Gi
+    mountPath: /recordings
+  snapshots:
+    storageClass: ""
+    accessMode: ReadWriteOnce
+    size: 50Gi
+    mountPath: /snapshots
+  logs:
+    storageClass: ""
+    accessMode: ReadWriteOnce
+    size: 10Gi
+    mountPath: /var/log/ag_egress
+
+# Agora configuration
+agora:
+  appId: "YOUR_AGORA_APP_ID"
+  # For production, use secrets instead of plain text
+  accessToken: ""
+  channelName: ""
+  egressUid: "42"
+
+# Redis configuration
+redis:
+  # Use external Redis
+  external:
+    enabled: true
+    host: "redis-server"
+    port: 6379
+    password: ""
+    database: 0
+  
+  # Use Redis subchart (for development)
+  subchart:
+    enabled: false
+
+# Server configuration
+server:
+  ginMode: "release"
+  apiPort: 8080
+  healthPort: 8182
+  canvasTemplatePort: 3000
+  logLevel: "info"
+
+# Pod configuration
+pod:
+  region: ""
+  workers: 4
+
+# Recording configuration
+recording:
+  enabled: false
+  outputDir: "/recordings"
+  users: "9032"
+  layout: "flat"
+  format: "mp4"
+  maxDurationSeconds: 86400
+  video:
+    enabled: true
+    width: 1280
+    height: 720
+    fps: 30
+    bitrate: 2000000
+    codec: "libx264"
+  audio:
+    enabled: true
+    sampleRate: 48000
+    channels: 2
+    bitrate: 128000
+    codec: "aac"
+
+# Snapshots configuration
+snapshots:
+  outputDir: "/snapshots"
+  width: 1280
+  height: 720
+  users: "9032"
+  layout: "flat"
+  intervalInMs: 20000
+  quality: 0
+
+# S3 configuration (optional)
+s3:
+  enabled: false
+  bucket: ""
+  region: "us-west-2"
+  accessKey: ""
+  secretKey: ""
+  endpoint: ""
+
+# Environment variables
+env: []
+  # - name: CUSTOM_VAR
+  #   value: "custom-value"
+
+# Additional environment variables from secrets/configmaps
+envFrom: []
+  # - secretRef:
+  #     name: egress-secrets
+  # - configMapRef:
+  #     name: egress-config
+
+# Pod annotations
+podAnnotations: {}
+
+# Pod labels
+podLabels: {}
+
+# Additional volumes
+extraVolumes: []
+
+# Additional volume mounts
+extraVolumeMounts: []
+
+# Init containers
+initContainers: []
+
+# Sidecar containers
+sidecars: []

@@ -1,0 +1,109 @@
+# Production values for egress-server
+# Override the default values.yaml for production deployment
+
+# Image configuration
+image:
+  registry: ghcr.io
+  repository: AgoraIO/RTC-Egress
+  tag: "1.0.0"
+  pullPolicy: IfNotPresent
+
+# Production scaling
+replicaCount: 3
+
+# Production resources
+resources:
+  limits:
+    cpu: 4000m
+    memory: 8Gi
+  requests:
+    cpu: 1000m
+    memory: 2Gi
+
+# Enable autoscaling
+autoscaling:
+  enabled: true
+  minReplicas: 3
+  maxReplicas: 20
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 80
+
+# Production storage
+persistence:
+  enabled: true
+  recordings:
+    storageClass: "fast-ssd"
+    size: 1000Gi
+  snapshots:
+    storageClass: "fast-ssd" 
+    size: 500Gi
+  logs:
+    storageClass: "standard"
+    size: 50Gi
+
+# External Redis (required for production)
+redis:
+  external:
+    enabled: true
+    host: "redis.prod.example.com"
+    port: 6379
+    password: "${REDIS_PASSWORD}"
+    database: 0
+
+# Production server config
+server:
+  ginMode: "release"
+  logLevel: "warn"
+
+# Enable S3 for production
+s3:
+  enabled: true
+  bucket: "agora-egress-prod"
+  region: "us-west-2"
+  # Use secrets for credentials in production
+
+# Production recording settings
+recording:
+  enabled: true
+  video:
+    width: 1920
+    height: 1080
+    fps: 60
+    bitrate: 8000000
+
+# Enable ingress for production
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    kubernetes.io/tls-acme: "true"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+  hosts:
+    - host: egress.agora.build
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: egress-tls
+      hosts:
+        - egress.agora.build
+
+# Pod disruption budget
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 2
+
+# Production affinity rules
+affinity:
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+              - key: app.kubernetes.io/name
+                operator: In
+                values:
+                  - egress-server
+          topologyKey: kubernetes.io/hostname

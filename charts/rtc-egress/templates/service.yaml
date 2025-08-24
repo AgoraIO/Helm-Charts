@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "egress-server.fullname" . }}
+  labels:
+    {{- include "egress-server.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: {{ .Values.service.ports.api.port }}
+      targetPort: {{ .Values.service.ports.api.targetPort }}
+      protocol: {{ .Values.service.ports.api.protocol }}
+      name: api
+    - port: {{ .Values.service.ports.health.port }}
+      targetPort: {{ .Values.service.ports.health.targetPort }}
+      protocol: {{ .Values.service.ports.health.protocol }}
+      name: health
+    - port: {{ .Values.service.ports.canvas.port }}
+      targetPort: {{ .Values.service.ports.canvas.targetPort }}
+      protocol: {{ .Values.service.ports.canvas.protocol }}
+      name: canvas
+  selector:
+    {{- include "egress-server.selectorLabels" . | nindent 4 }}
