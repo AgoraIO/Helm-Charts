@@ -7,11 +7,14 @@ on:
 
 jobs:
   release:
-    # depending on default permission settings for your org (contents being read-only or read-write for workloads), you will have to add permissions
-    # see: https://docs.github.com/en/actions/security-guides/automatic-token-authentication#modifying-the-permissions-for-the-github_token
     permissions:
-      contents: write
+      contents: read
+      pages: write
+      id-token: write
     runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -32,10 +35,26 @@ jobs:
         run: |
           helm repo add bitnami https://charts.bitnami.com/bitnami
 
-      - name: Run chart-releaser
-        uses: helm/chart-releaser-action@v1.6.0
-        env:
-          CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+      - name: Package charts
+        run: |
+          mkdir -p .cr-release-packages
+          for chart in charts/*; do
+            if [ -d "$chart" ]; then
+              helm dependency update "$chart"
+              helm package "$chart" --destination .cr-release-packages
+            fi
+          done
+
+      - name: Generate Helm index
+        run: |
+          helm repo index .cr-release-packages --url https://helm.agora.build
+          cp .cr-release-packages/index.yaml ./index.yaml
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          charts_dir: charts
-          config: cr.yaml
+          path: .cr-release-packages
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
