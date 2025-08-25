@@ -1,9 +1,9 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "egress-server.fullname" . }}
+  name: {{ include "rtc-egress.fullname" . }}
   labels:
-    {{- include "egress-server.labels" . | nindent 4 }}
+    {{- include "rtc-egress.labels" . | nindent 4 }}
 spec:
   type: {{ .Values.service.type }}
   ports:
@@ -20,4 +20,4 @@ spec:
       protocol: {{ .Values.service.ports.canvas.protocol }}
       name: canvas
   selector:
-    {{- include "egress-server.selectorLabels" . | nindent 4 }}
+    {{- include "rtc-egress.selectorLabels" . | nindent 4 }}

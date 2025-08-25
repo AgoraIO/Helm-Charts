@@ -1,4 +1,4 @@
-# Default values for egress-server
+# Default values for rtc-egress
 # This is a YAML-formatted file.
 
 # Global configuration
@@ -9,7 +9,7 @@ global:
 # Image configuration
 image:
   registry: ghcr.io
-  repository: AgoraIO/RTC-Egress
+  repository: agoraio/rtc-egress
   tag: "latest"
   pullPolicy: IfNotPresent
 
@@ -69,7 +69,7 @@ ingress:
         - path: /
           pathType: Prefix
           service:
-            name: egress-server
+            name: rtc-egress
             port: 8080
   tls: []
     # - secretName: egress-tls

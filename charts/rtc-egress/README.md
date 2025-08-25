@@ -19,11 +19,11 @@ helm repo add agora https://helm.agora.build
 helm repo update
 
 # Create namespace
-kubectl create namespace com.favd.egress
+kubectl create namespace com.myrtc.egress
 
 # Install the chart
-helm install agora-egress-server agora/rtc-egress \
-  --namespace com.favd.egress \
+helm install my-rtc-egress agora/rtc-egress \
+  --namespace com.myrtc.egress \
   --set agora.appId=YOUR_AGORA_APP_ID \
   --set redis.external.host=YOUR_REDIS_HOST \
   --values values.yaml
@@ -37,23 +37,23 @@ git clone https://github.com/AgoraIO/RTC-Egress.git
 cd RTC-Egress
 
 # Install the chart
-helm install agora-egress-server ./deployment/helm/egress-server \
-  --namespace com.favd.egress \
+helm install my-rtc-egress ./charts/rtc-egress \
+  --namespace com.myrtc.egress \
   --create-namespace \
   --set agora.appId=YOUR_AGORA_APP_ID
 ```
 
 ## Uninstalling the Chart
 
-To uninstall/delete the `agora-egress-server` deployment:
+To uninstall/delete the `my-rtc-egress` deployment:
 
 ```bash
-helm delete agora-egress-server --namespace com.favd.egress
+helm delete my-rtc-egress --namespace com.myrtc.egress
 ```
 
 ## Configuration
 
-The following table lists the configurable parameters of the egress-server chart and their default values.
+The following table lists the configurable parameters of the rtc-egress chart and their default values.
 
 ### Image Configuration
 
@@ -175,17 +175,17 @@ The chart includes health checks and readiness probes:
 
 1. **Pod not starting**: Check if Agora App ID is configured correctly
    ```bash
-   kubectl logs -l app.kubernetes.io/name=egress-server
+   kubectl logs -l app.kubernetes.io/name=rtc-egress
    ```
 
 2. **Redis connection issues**: Verify Redis configuration
    ```bash
-   kubectl exec -it deployment/egress-server -- env | grep REDIS
+   kubectl exec -it deployment/rtc-egress-server -- env | grep REDIS
    ```
 
 3. **Storage issues**: Check PVC status
    ```bash
-   kubectl get pvc -l app.kubernetes.io/name=egress-server
+   kubectl get pvc -l app.kubernetes.io/name=rtc-egress
    ```
 
 ### Debugging
