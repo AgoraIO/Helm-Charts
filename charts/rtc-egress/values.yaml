@@ -143,7 +143,7 @@ persistence:
     storageClass: ""
     accessMode: ReadWriteOnce
     size: 10Gi
-    mountPath: /var/log/ag_egress
+    mountPath: /var/log/rtc_egress
 
 # Agora configuration
 agora:
