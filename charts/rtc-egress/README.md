@@ -203,4 +203,4 @@ Please read the [contributing guidelines](../../../CONTRIBUTING.md) before submi
 
 ## License
 
-This chart is licensed under the Apache 2.0 License. See [LICENSE](../../../LICENSE) for more information.
+This chart is licensed under the MIT License. See [LICENSE](../../../LICENSE) for more information.
