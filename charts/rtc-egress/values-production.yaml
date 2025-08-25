@@ -64,7 +64,6 @@ s3:
 
 # Production recording settings
 recording:
-  enabled: true
   video:
     width: 1920
     height: 1080

@@ -84,8 +84,6 @@ data:
 
     # Recording settings
     recording:
-      enabled: {{ .Values.recording.enabled }}
-      {{- if .Values.recording.enabled }}
       output_dir: {{ .Values.recording.outputDir | quote }}
       users: {{ .Values.recording.users | quote }}
       layout: {{ .Values.recording.layout | quote }}
@@ -110,7 +108,6 @@ data:
         bitrate: {{ .Values.recording.audio.bitrate }}
         codec: {{ .Values.recording.audio.codec | quote }}
         buffer_size: 100
-      {{- end }}
 
     # Logging configuration
     log:
