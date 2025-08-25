@@ -1,8 +1,8 @@
 apiVersion: v2
 name: rtc-egress
-description: Agora RTC Egress Server - Real-time video recording and snapshot service
+description: Agora RTC Egress Server - Real-time video recording and snapshot service .etc
 type: application
-version: 1.0.0
+version: 1.0.1
 appVersion: "1.0.0"
 home: https://github.com/AgoraIO/RTC-Egress
 sources:
@@ -17,11 +17,12 @@ keywords:
   - egress
   - video
   - recording
+  - snapshot
   - streaming
 annotations:
   category: Media
-  licenses: Apache-2.0
+  licenses: MIT
   images: |
-    - name: egress-server
+    - name: rtc-egress-service
       image: ghcr.io/AgoraIO/RTC-Egress:latest
 dependencies: []
