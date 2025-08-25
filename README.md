@@ -25,13 +25,52 @@ helm repo update
 ### RTC Egress
 
 ```bash
-helm install egress agora/rtc-egress
+helm install my-rtc-egress agora/rtc-egress
 ```
 
 With custom values:
 
 ```bash
-helm install egress agora/rtc-egress -f my-values.yaml
+helm install my-rtc-egress agora/rtc-egress -f my-values.yaml
+```
+
+Full values.yaml:
+
+```bash
+helm install my-rtc-egress agora/rtc-egress \
+    --namespace myrtc-egress \
+    --set agora.appId=$AGORA_APP_ID \
+    --set redis.external.host=$REDIS_HOST \
+    --set redis.external.port=$REDIS_PORT \
+    --set image.tag=$IMAGE_TAG \
+    --set 'global.imagePullSecrets[0].name=ghcr-secret'
+```
+
+```bash
+helm list -n myrtc-egress
+```
+
+```bash
+kubectl get pods -n myrtc-egress
+```
+
+```bash
+kubectl logs -n myrtc-egress my-rtc-egress-69b7b86d5b-sfzcq
+```
+
+If you want to upgrade the chart:
+```bash
+helm upgrade my-rtc-egress ./charts/rtc-egress \
+    --namespace myrtc-egress \
+    --set agora.appId=$AGORA_APP_ID \
+    --set redis.external.host=$REDIS_HOST \
+    --set redis.external.port=$REDIS_PORT \
+    --set 'global.imagePullSecrets[0].name=ghcr-secret'
+```
+
+If you want to uninstall the chart:
+```bash
+helm uninstall my-rtc-egress -n myrtc-egress
 ```
 
 ## Development(Chart Maintainer)
