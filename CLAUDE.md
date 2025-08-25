@@ -79,9 +79,9 @@ helm install egress agora/rtc-egress -f values-production.yaml
 ### Template Helpers
 
 The `_helpers.tpl` file contains standard Helm helper templates for:
-- Resource naming (`egress-server.name`, `egress-server.fullname`)
-- Label generation (`egress-server.labels`, `egress-server.selectorLabels`)
-- Service account naming (`egress-server.serviceAccountName`)
+- Resource naming (`rtc-egress.name`, `rtc-egress.fullname`)
+- Label generation (`rtc-egress.labels`, `rtc-egress.selectorLabels`)
+- Service account naming (`rtc-egress.serviceAccountName`)
 
 ## Prerequisites
 

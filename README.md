@@ -18,7 +18,7 @@ helm repo update
 
 | Chart | Description | Version |
 |-------|-------------|---------|
-| [rtc-egress](./charts/rtc-egress) | Real-time video recording and snapshot service | 1.0.0 |
+| [rtc-egress](./charts/rtc-egress) | Real-time video recording, snapshot service and more | 1.0.0 |
 
 ## Installing Charts
 

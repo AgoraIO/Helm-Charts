@@ -1,10 +1,10 @@
-# Production values for egress-server
+# Production values for rtc-egress
 # Override the default values.yaml for production deployment
 
 # Image configuration
 image:
   registry: ghcr.io
-  repository: AgoraIO/RTC-Egress
+  repository: agoraio/rtc-egress
   tag: "1.0.0"
   pullPolicy: IfNotPresent
 
@@ -105,5 +105,5 @@ affinity:
               - key: app.kubernetes.io/name
                 operator: In
                 values:
-                  - egress-server
+                  - rtc-egress
           topologyKey: kubernetes.io/hostname
