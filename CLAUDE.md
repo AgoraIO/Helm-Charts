@@ -62,7 +62,7 @@ helm install egress agora/rtc-egress -f values-production.yaml
 
 ### Core Components
 
-- **RTC Egress Server**: Main application container (`ag_egress:latest`)
+- **RTC Egress Server**: Main application container (`rtc_egress:latest`)
 - **Persistent Storage**: Three volumes for recordings, snapshots, and logs
 - **Redis Integration**: External Redis required for session management
 - **Multi-port Service**: API (8080), Health (8182), Canvas Template (3000)

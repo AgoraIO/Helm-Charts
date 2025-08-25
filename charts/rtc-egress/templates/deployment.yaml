@@ -149,7 +149,7 @@ spec:
           
           volumeMounts:
             - name: config
-              mountPath: /opt/ag_egress/config
+              mountPath: /opt/rtc_egress/config
               readOnly: true
             {{- if .Values.persistence.enabled }}
             - name: recordings

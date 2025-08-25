@@ -115,7 +115,7 @@ data:
     # Logging configuration
     log:
       level: {{ .Values.server.logLevel | quote }}
-      file: "/var/log/ag_egress/egress.log"
+      file: "/var/log/rtc_egress/egress.log"
       max_size: 100
       max_backups: 3
       max_age: 28
