@@ -11,7 +11,7 @@ image:
   registry: ghcr.io
   repository: agoraio/rtc-egress
   tag: "latest"
-  pullPolicy: IfNotPresent
+  pullPolicy: Always
 
 # Service account
 serviceAccount:
