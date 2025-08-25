@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This repository contains Helm charts for AgoraIO services, specifically the RTC Egress Server which provides real-time video recording and snapshot capabilities. The main chart is located at `charts/rtc-egress/` and is designed for Kubernetes deployment.
+This repository contains Helm charts for self-hosted Agora services, specifically the RTC Egress Server which provides real-time video recording and snapshot capabilities. The main chart is located at `charts/rtc-egress/` and is designed for Kubernetes deployment.
 
 ## Repository Structure
 

@@ -1,13 +1,13 @@
-# AgoraIO Helm Charts
+# Agora Helm Charts
 
 [![Release Charts](https://github.com/AgoraIO/helm-charts/actions/workflows/release.yml/badge.svg)](https://github.com/AgoraIO/helm-charts/actions/workflows/release.yml)
 [![Lint and Test Charts](https://github.com/AgoraIO/helm-charts/actions/workflows/lint-test.yml/badge.svg)](https://github.com/AgoraIO/helm-charts/actions/workflows/lint-test.yml)
 
-This repository contains Helm charts for AgoraIO services.
+This repository contains Helm charts for self-hosted Agora services.
 
 ## Usage
 
-Add the AgoraIO helm repository:
+Add the Agora helm repository:
 
 ```bash
 helm repo add agora https://helm.agora.build
@@ -34,7 +34,7 @@ With custom values:
 helm install egress agora/rtc-egress -f my-values.yaml
 ```
 
-## Development
+## Development(Chart Maintainer)
 
 ### Prerequisites
 
@@ -57,6 +57,10 @@ ct install --all
 2. Follow the [Helm chart best practices](https://helm.sh/docs/chart_best_practices/)
 3. Ensure your chart passes linting and testing
 4. Submit a pull request
+
+## Repository Setup(Repository Admin)
+
+To enable `https://helm.agora.build`, see the [REPOSITORY-SETUP.md](REPOSITORY-SETUP.md) guide for configuring GitHub Pages and Actions.
 
 ## Contributing
 

@@ -22,7 +22,7 @@ helm repo update
 kubectl create namespace com.favd.egress
 
 # Install the chart
-helm install agora-egress-server agora/egress-server \
+helm install agora-egress-server agora/rtc-egress \
   --namespace com.favd.egress \
   --set agora.appId=YOUR_AGORA_APP_ID \
   --set redis.external.host=YOUR_REDIS_HOST \
@@ -136,7 +136,7 @@ The following table lists the configurable parameters of the egress-server chart
 ### Basic Installation
 
 ```bash
-helm install my-egress agora/egress-server \
+helm install my-egress agora/rtc-egress \
   --set agora.appId=your-app-id \
   --set redis.external.host=redis.example.com
 ```
@@ -144,7 +144,7 @@ helm install my-egress agora/egress-server \
 ### Production Installation
 
 ```bash
-helm install prod-egress agora/egress-server \
+helm install prod-egress agora/rtc-egress \
   --namespace production \
   --values values-production.yaml \
   --set agora.appId=your-app-id \
@@ -155,7 +155,7 @@ helm install prod-egress agora/egress-server \
 ### Development with Local Redis
 
 ```bash
-helm install dev-egress agora/egress-server \
+helm install dev-egress agora/rtc-egress \
   --namespace development \
   --set agora.appId=your-app-id \
   --set redis.subchart.enabled=true \
@@ -192,7 +192,7 @@ The chart includes health checks and readiness probes:
 
 Enable debug mode:
 ```bash
-helm upgrade my-egress agora/egress-server \
+helm upgrade my-egress agora/rtc-egress \
   --set server.ginMode=debug \
   --set server.logLevel=debug
 ```

@@ -8,8 +8,8 @@ home: https://github.com/AgoraIO/RTC-Egress
 sources:
   - https://github.com/AgoraIO/RTC-Egress
 maintainers:
-  - name: AgoraIO Team
-    email: developer@agora.io
+  - name: Agora Team
+    email: brent@agora.io
     url: https://agora.io
 keywords:
   - agora
