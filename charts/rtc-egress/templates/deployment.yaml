@@ -105,9 +105,6 @@ spec:
               value: {{ .Values.pod.workers | quote }}
             
             # Recording Configuration
-            - name: RECORDING_ENABLED
-              value: {{ .Values.recording.enabled | quote }}
-            {{- if .Values.recording.enabled }}
             - name: RECORDING_FORMAT
               value: {{ .Values.recording.format | quote }}
             - name: VIDEO_WIDTH
@@ -118,7 +115,6 @@ spec:
               value: {{ .Values.recording.video.fps | quote }}
             - name: VIDEO_BITRATE
               value: {{ .Values.recording.video.bitrate | quote }}
-            {{- end }}
             
             # S3 Configuration
             {{- if .Values.s3.enabled }}

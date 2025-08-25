@@ -182,7 +182,6 @@ pod:
 
 # Recording configuration
 recording:
-  enabled: false
   outputDir: "/recordings"
   users: "9032"
   layout: "flat"
