@@ -25,7 +25,12 @@ helm repo update
 ### RTC Egress
 
 ```bash
-helm install my-rtc-egress agora/rtc-egress
+# Create the secret for private registry
+kubectl create secret docker-registry ghcr-secret \
+    --docker-server=ghcr.io \
+    --docker-username=YOUR_GITHUB_USERNAME \
+    --docker-password=YOUR_GITHUB_TOKEN \
+    --namespace myrtc-egress
 ```
 
 With custom values:
@@ -65,6 +70,7 @@ helm upgrade my-rtc-egress ./charts/rtc-egress \
     --set agora.appId=$AGORA_APP_ID \
     --set redis.external.host=$REDIS_HOST \
     --set redis.external.port=$REDIS_PORT \
+    --set image.tag=$IMAGE_TAG \
     --set 'global.imagePullSecrets[0].name=ghcr-secret'
 ```
 
