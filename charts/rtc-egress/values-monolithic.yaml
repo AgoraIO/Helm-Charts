@@ -1,0 +1,110 @@
+# Monolithic deployment - single service with all functionality
+# Disables separated services and uses traditional single-container approach
+
+architecture: "monolithic"
+
+# Disable all separated services
+apiServer:
+  enabled: false
+
+egress:
+  enabled: false
+
+flexibleRecorder:
+  enabled: false
+
+uploader:
+  enabled: false
+
+webhookNotifier:
+  enabled: false
+
+# Monolithic service configuration
+monolithic:
+  enabled: true
+  image:
+    registry: ghcr.io
+    repository: agoraio/rtc-egress
+    tag: "latest"
+    pullPolicy: Always
+  replicaCount: 3
+  service:
+    type: ClusterIP
+    ports:
+      api:
+        port: 8080
+        targetPort: 8080
+        protocol: TCP
+      health:
+        port: 8182
+        targetPort: 8182
+        protocol: TCP
+      canvas:
+        port: 3000
+        targetPort: 3000
+        protocol: TCP
+  resources:
+    limits:
+      cpu: 2000m
+      memory: 4Gi
+    requests:
+      cpu: 1000m
+      memory: 2Gi
+  autoscaling:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+
+# Use legacy configuration patterns
+replicaCount: 3
+image:
+  registry: ghcr.io
+  repository: agoraio/rtc-egress
+  tag: "latest"
+  pullPolicy: Always
+
+service:
+  type: ClusterIP
+  ports:
+    api:
+      port: 8080
+      targetPort: 8080
+      protocol: TCP
+    health:
+      port: 8182
+      targetPort: 8182
+      protocol: TCP
+    canvas:
+      port: 3000
+      targetPort: 3000
+      protocol: TCP
+
+resources:
+  limits:
+    cpu: 2000m
+    memory: 4Gi
+  requests:
+    cpu: 1000m
+    memory: 2Gi
+
+autoscaling:
+  enabled: true
+  minReplicas: 3
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 80
+
+# Pod configuration for monolithic mode
+pod:
+  region: ""
+  workers: 4
+
+# Server configuration
+server:
+  ginMode: "release"
+  apiPort: 8080
+  healthPort: 8182
+  canvasTemplatePort: 3000
+  logLevel: "info"

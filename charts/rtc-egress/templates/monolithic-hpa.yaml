@@ -1,0 +1,44 @@
+{{- if and (eq .Values.architecture "monolithic") .Values.autoscaling.enabled }}
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ include "rtc-egress.fullname" . }}
+  labels:
+    {{- include "rtc-egress.labels" . | nindent 4 }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ include "rtc-egress.fullname" . }}
+  minReplicas: {{ .Values.autoscaling.minReplicas }}
+  maxReplicas: {{ .Values.autoscaling.maxReplicas }}
+  metrics:
+    {{- if .Values.autoscaling.targetCPUUtilizationPercentage }}
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.autoscaling.targetCPUUtilizationPercentage }}
+    {{- end }}
+    {{- if .Values.autoscaling.targetMemoryUtilizationPercentage }}
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.autoscaling.targetMemoryUtilizationPercentage }}
+    {{- end }}
+    {{- if .Values.autoscaling.redis.enabled }}
+    - type: External
+      external:
+        metric:
+          name: redis_queue_length
+          selector:
+            matchLabels:
+              queue: "{{ .Values.autoscaling.redis.queueName }}"
+        target:
+          type: AverageValue
+          averageValue: {{ .Values.autoscaling.redis.targetQueueLength | quote }}
+    {{- end }}
+{{- end }}

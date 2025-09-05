@@ -1,19 +1,23 @@
 # Default values for rtc-egress
-# This is a YAML-formatted file.
+# This file contains development/testing defaults and is automatically loaded by Helm
+# For specific environments, use:
+# - values.yaml (development/testing) - this file
+# - values-production-separated.yaml (production separated architecture)
+# - values-monolithic.yaml (monolithic single-container mode)
 
-# Global configuration
-global:
-  imageRegistry: ""
-  imagePullSecrets: []
+# Import development configuration as default
+# This ensures 'helm install' works without specifying --values
+architecture: "separated"
+
+# Default configuration points to development settings
+# For production, always use: --values values-production-separated.yaml
+# For monolithic mode, use: --values values-monolithic.yaml
 
 # Service account
 serviceAccount:
   create: true
   name: ""
   annotations: {}
-
-# Architecture mode: "monolithic" or "separated"
-architecture: "separated"
 
 # Pod security context
 podSecurityContext:
@@ -32,12 +36,12 @@ securityContext:
   runAsNonRoot: true
   runAsUser: 1001
 
-# API Server Configuration (HTTP API - publishes tasks to Redis)
+# API Server Configuration - Development defaults
 apiServer:
   enabled: true
   image:
     registry: ghcr.io
-    repository: agoraio/api-server
+    repository: agoraio/rtc-egress/api-server
     tag: "latest"
     pullPolicy: Always
   replicaCount: 1
@@ -54,17 +58,13 @@ apiServer:
       memory: 256Mi
   autoscaling:
     enabled: false
-    minReplicas: 1
-    maxReplicas: 5
-    targetCPUUtilizationPercentage: 70
-    targetMemoryUtilizationPercentage: 80
 
-# Egress Service Configuration (Native recording/snapshot with C++ workers)
+# Egress Service Configuration - Development defaults
 egress:
   enabled: true
   image:
     registry: ghcr.io
-    repository: agoraio/egress
+    repository: agoraio/rtc-egress/egress
     tag: "latest"
     pullPolicy: Always
   replicaCount: 3
@@ -80,22 +80,14 @@ egress:
       cpu: 1000m
       memory: 2Gi
   autoscaling:
-    enabled: true
-    minReplicas: 3
-    maxReplicas: 10
-    targetCPUUtilizationPercentage: 70
-    targetMemoryUtilizationPercentage: 80
-    redis:
-      enabled: true
-      queueName: "egress:record:*"
-      targetQueueLength: "10"
+    enabled: false
 
-# Flexible Recorder Service Configuration (Web recording via web recorder engine)
+# Flexible Recorder Service Configuration - Development defaults
 flexibleRecorder:
   enabled: true
   image:
     registry: ghcr.io
-    repository: agoraio/flexible-recorder
+    repository: agoraio/rtc-egress/flexible-recorder
     tag: "latest"
     pullPolicy: Always
   replicaCount: 2
@@ -115,21 +107,13 @@ flexibleRecorder:
     timeout: 30
   autoscaling:
     enabled: false
-    minReplicas: 2
-    maxReplicas: 8
-    targetCPUUtilizationPercentage: 70
-    targetMemoryUtilizationPercentage: 80
-    redis:
-      enabled: false
-      queueName: "egress:web:*"
-      targetQueueLength: "5"
 
-# Uploader Service Configuration (File upload to S3)
+# Uploader Service Configuration - Development defaults
 uploader:
   enabled: true
   image:
     registry: ghcr.io
-    repository: agoraio/uploader
+    repository: agoraio/rtc-egress/uploader
     tag: "latest"
     pullPolicy: Always
   replicaCount: 1
@@ -145,17 +129,13 @@ uploader:
       memory: 256Mi
   autoscaling:
     enabled: false
-    minReplicas: 1
-    maxReplicas: 3
-    targetCPUUtilizationPercentage: 70
-    targetMemoryUtilizationPercentage: 80
 
-# Webhook Notifier Service Configuration (updated for new architecture)
+# Webhook Notifier Service Configuration - Development defaults
 webhookNotifier:
   enabled: true
   image:
     registry: ghcr.io
-    repository: agoraio/webhook-notifier
+    repository: agoraio/rtc-egress/webhook-notifier
     tag: "latest"
     pullPolicy: Always
   replicaCount: 2
@@ -171,107 +151,30 @@ webhookNotifier:
       cpu: 150m
       memory: 256Mi
   autoscaling:
-    enabled: true
-    minReplicas: 2
-    maxReplicas: 4
-    targetCPUUtilizationPercentage: 70
-    targetMemoryUtilizationPercentage: 80
+    enabled: false
   webhooks:
     enabled: true
     endpoints: []
 
-# Legacy monolithic service configuration (deprecated)
-service:
-  type: ClusterIP
-  ports:
-    api:
-      port: 8080
-      targetPort: 8080
-      protocol: TCP
-    health:
-      port: 8182
-      targetPort: 8182
-      protocol: TCP
-    canvas:
-      port: 3000
-      targetPort: 3000
-      protocol: TCP
-
-# Ingress configuration
-ingress:
-  enabled: false
-  className: ""
-  annotations: {}
-    # kubernetes.io/ingress.class: nginx
-    # kubernetes.io/tls-acme: "true"
-  hosts:
-    - host: egress.local
-      paths:
-        - path: /
-          pathType: Prefix
-          service:
-            name: rtc-egress
-            port: 8080
-  tls: []
-    # - secretName: egress-tls
-    #   hosts:
-    #     - egress.local
-
-# Legacy resources (deprecated - use individual service resources)
-resources:
-  limits:
-    cpu: 2000m
-    memory: 4Gi
-  requests:
-    cpu: 500m
-    memory: 1Gi
-
-# Node selector
-nodeSelector: {}
-
-# Tolerations
-tolerations: []
-
-# Affinity
-affinity: {}
-
-# Pod disruption budget
-podDisruptionBudget:
-  enabled: false
-  minAvailable: 1
-
-# Legacy autoscaling (deprecated - use individual service autoscaling)
-autoscaling:
-  enabled: false
-  minReplicas: 3
-  maxReplicas: 10
-  targetCPUUtilizationPercentage: 70
-  targetMemoryUtilizationPercentage: 80
-  redis:
+# Development Redis Configuration
+redis:
+  external:
     enabled: true
-    queueName: "egress:record:*"
-    targetQueueLength: "10"
+    host: "localhost"
+    port: 6379
+    password: ""
+    database: 0
+  subchart:
+    enabled: false
 
-# Probes
-livenessProbe:
-  httpGet:
-    path: /health
-    port: 8182
-  initialDelaySeconds: 30
-  periodSeconds: 10
-  timeoutSeconds: 5
-  failureThreshold: 3
+# Development Agora Configuration
+agora:
+  appId: "YOUR_AGORA_APP_ID"
+  accessToken: ""
+  channelName: "dev-test"
+  egressUid: "42"
 
-readinessProbe:
-  httpGet:
-    path: /health
-    port: 8182
-  initialDelaySeconds: 5
-  periodSeconds: 5
-  timeoutSeconds: 3
-  failureThreshold: 3
-
-# Persistent volumes
+# Development persistence with smaller volumes
 persistence:
   enabled: true
   recordings:
@@ -290,42 +193,143 @@ persistence:
     size: 10Gi
     mountPath: /var/log/rtc_egress
 
-# Agora configuration
-agora:
-  appId: "YOUR_AGORA_APP_ID"
-  # For production, use secrets instead of plain text
-  accessToken: ""
-  channelName: ""
-  egressUid: "42"
+# S3 disabled for development
+s3:
+  enabled: false
+  bucket: ""
+  region: "us-west-2"
+  accessKey: ""
+  secretKey: ""
+  endpoint: ""
 
-# Redis configuration
-redis:
-  # Use external Redis
-  external:
-    enabled: true
-    host: "redis-server"
-    port: 6379
-    password: ""
-    database: 0
-  
-  # Use Redis subchart (for development)
-  subchart:
-    enabled: false
-
-# Server configuration
-server:
-  ginMode: "release"
-  apiPort: 8080
-  healthPort: 8182
-  canvasTemplatePort: 3000
-  logLevel: "info"
-
-# Pod configuration
+# Development settings
 pod:
   region: ""
   workers: 4
 
-# Recording configuration
+server:
+  ginMode: "debug"
+  apiPort: 8080
+  healthPort: 8182
+  canvasTemplatePort: 3000
+  logLevel: "debug"
+
+# Monitoring disabled for development
+monitoring:
+  enabled: false
+  serviceMonitor:
+    enabled: false
+  redis:
+    enabled: false
+  alerts:
+    enabled: false
+
+# Environment variables
+env: []
+envFrom: []
+
+# Pod annotations and labels
+podAnnotations: {}
+podLabels: {}
+
+# Additional volumes and mounts
+extraVolumes: []
+extraVolumeMounts: []
+
+# Init and sidecar containers
+initContainers: []
+sidecars: []
+
+# Node selector, tolerations, affinity
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+# Pod disruption budget
+podDisruptionBudget:
+  enabled: false
+  minAvailable: 1
+
+# Legacy configurations for backward compatibility
+# These are used when architecture=monolithic
+image:
+  registry: ghcr.io
+  repository: agoraio/rtc-egress
+  tag: "latest"
+  pullPolicy: Always
+
+replicaCount: 3
+
+service:
+  type: ClusterIP
+  ports:
+    api:
+      port: 8080
+      targetPort: 8080
+      protocol: TCP
+    health:
+      port: 8182
+      targetPort: 8182
+      protocol: TCP
+    canvas:
+      port: 3000
+      targetPort: 3000
+      protocol: TCP
+
+resources:
+  limits:
+    cpu: 2000m
+    memory: 4Gi
+  requests:
+    cpu: 500m
+    memory: 1Gi
+
+autoscaling:
+  enabled: false
+  minReplicas: 3
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 80
+  redis:
+    enabled: true
+    queueName: "egress:record:*"
+    targetQueueLength: "10"
+
+# Legacy probe configurations
+livenessProbe:
+  httpGet:
+    path: /health
+    port: 8182
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+readinessProbe:
+  httpGet:
+    path: /health
+    port: 8182
+  initialDelaySeconds: 5
+  periodSeconds: 5
+  timeoutSeconds: 3
+  failureThreshold: 3
+
+# Ingress configuration
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts:
+    - host: egress.local
+      paths:
+        - path: /
+          pathType: Prefix
+          service:
+            name: rtc-egress
+            port: 8080
+  tls: []
+
+# Recording and snapshot configurations
 recording:
   outputDir: "/recordings"
   users: "9032"
@@ -346,7 +350,6 @@ recording:
     bitrate: 128000
     codec: "aac"
 
-# Snapshots configuration
 snapshots:
   outputDir: "/snapshots"
   width: 1280
@@ -355,92 +358,3 @@ snapshots:
   layout: "flat"
   intervalInMs: 20000
   quality: 0
-
-# S3 configuration (optional)
-s3:
-  enabled: false
-  bucket: ""
-  region: "us-west-2"
-  accessKey: ""
-  secretKey: ""
-  endpoint: ""
-
-# Environment variables
-env: []
-  # - name: CUSTOM_VAR
-  #   value: "custom-value"
-
-# Additional environment variables from secrets/configmaps
-envFrom: []
-  # - secretRef:
-  #     name: egress-secrets
-  # - configMapRef:
-  #     name: egress-config
-
-# Pod annotations
-podAnnotations: {}
-
-# Pod labels
-podLabels: {}
-
-# Additional volumes
-extraVolumes: []
-
-# Additional volume mounts
-extraVolumeMounts: []
-
-# Init containers
-initContainers: []
-
-# Sidecar containers
-sidecars: []
-
-
-# Monitoring Configuration  
-monitoring:
-  enabled: true
-  # System + Performance metrics (automatic)
-  serviceMonitor:
-    enabled: true
-    interval: 30s
-    # Automatically scrapes:
-    # - HTTP request latency (from Gin framework)
-    # - HTTP error rates (4xx, 5xx responses) 
-    # - Request throughput (requests per second)
-    # - System metrics (CPU, memory, disk, network)
-  
-  # Redis metrics for queue-based scaling
-  redis:
-    enabled: true
-    exporter:
-      image: "oliver006/redis_exporter:v1.45.0"
-      resources:
-        limits:
-          cpu: 100m
-          memory: 128Mi
-        requests:
-          cpu: 50m
-          memory: 64Mi
-  
-  # Performance thresholds for alerting
-  alerts:
-    enabled: true
-    thresholds:
-      # Request performance
-      latency:
-        p95: 2000ms     # Alert if 95th percentile > 2s
-        p99: 5000ms     # Alert if 99th percentile > 5s
-      errorRate:
-        threshold: 5    # Alert if error rate > 5%
-      throughput:
-        min: 10         # Alert if RPS < 10 (indicates problems)
-      # System performance  
-      cpu:
-        threshold: 80   # Alert if CPU > 80%
-      memory:
-        threshold: 85   # Alert if memory > 85%
-      # Redis performance
-      redisQueue:
-        maxLength: 100  # Alert if queue > 100 tasks
-        maxWaitTime: 60 # Alert if tasks wait > 60s
-

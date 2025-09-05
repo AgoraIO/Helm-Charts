@@ -1,0 +1,19 @@
+{{- if eq .Values.architecture "monolithic" }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "rtc-egress.fullname" . }}
+  labels:
+    {{- include "rtc-egress.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    {{- range $name, $config := .Values.service.ports }}
+    - port: {{ $config.port }}
+      targetPort: {{ $config.targetPort }}
+      protocol: {{ $config.protocol }}
+      name: {{ $name }}
+    {{- end }}
+  selector:
+    {{- include "rtc-egress.selectorLabels" . | nindent 4 }}
+{{- end }}

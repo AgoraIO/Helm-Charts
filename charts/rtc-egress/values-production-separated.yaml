@@ -17,7 +17,7 @@ apiServer:
   replicaCount: 1
   image:
     registry: ghcr.io
-    repository: agoraio/api-server
+    repository: agoraio/rtc-egress/api-server
     tag: "latest"
     pullPolicy: Always
   resources:
@@ -41,7 +41,7 @@ egress:
   workers: 4
   image:
     registry: ghcr.io
-    repository: agoraio/egress
+    repository: agoraio/rtc-egress/egress
     tag: "latest"
     pullPolicy: Always
   resources:
@@ -69,7 +69,7 @@ flexibleRecorder:
   workers: 2
   image:
     registry: ghcr.io
-    repository: agoraio/flexible-recorder
+    repository: agoraio/rtc-egress/flexible-recorder
     tag: "latest"
     pullPolicy: Always
   resources:
@@ -99,7 +99,7 @@ uploader:
   replicaCount: 1
   image:
     registry: ghcr.io
-    repository: agoraio/uploader
+    repository: agoraio/rtc-egress/uploader
     tag: "latest"
     pullPolicy: Always
   resources:
@@ -122,7 +122,7 @@ webhookNotifier:
   replicaCount: 2
   image:
     registry: ghcr.io
-    repository: agoraio/webhook-notifier
+    repository: agoraio/rtc-egress/webhook-notifier
     tag: "latest"
     pullPolicy: Always
   resources:

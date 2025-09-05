@@ -1,17 +1,17 @@
-{{- if eq .Values.architecture "separated" }}
+{{- if eq .Values.architecture "monolithic" }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "rtc-egress.fullname" . }}-uploader
+  name: {{ include "rtc-egress.fullname" . }}
   labels:
     {{- include "rtc-egress.labels" . | nindent 4 }}
-    app.kubernetes.io/component: uploader
 spec:
-  replicas: {{ .Values.uploader.replicaCount }}
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
   selector:
     matchLabels:
       {{- include "rtc-egress.selectorLabels" . | nindent 6 }}
-      app.kubernetes.io/component: uploader
   template:
     metadata:
       {{- with .Values.podAnnotations }}
@@ -20,7 +20,6 @@ spec:
       {{- end }}
       labels:
         {{- include "rtc-egress.selectorLabels" . | nindent 8 }}
-        app.kubernetes.io/component: uploader
         {{- with .Values.podLabels }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
@@ -32,34 +31,32 @@ spec:
       serviceAccountName: {{ include "rtc-egress.serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      {{- with .Values.initContainers }}
+      initContainers:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       containers:
-        - name: uploader
+        - name: {{ .Chart.Name }}
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
-          image: "{{ .Values.global.imageRegistry | default .Values.uploader.image.registry }}/{{ .Values.uploader.image.repository }}:{{ .Values.uploader.image.tag | default .Chart.AppVersion }}"
-          imagePullPolicy: {{ .Values.uploader.image.pullPolicy }}
+          image: "{{ .Values.global.imageRegistry | default .Values.image.registry }}/{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
+            - name: http
+              containerPort: {{ .Values.server.apiPort }}
+              protocol: TCP
             - name: health
-              containerPort: 8184
+              containerPort: {{ .Values.server.healthPort }}
+              protocol: TCP
+            - name: canvas
+              containerPort: {{ .Values.server.canvasTemplatePort }}
               protocol: TCP
           livenessProbe:
-            httpGet:
-              path: /health
-              port: health
-            initialDelaySeconds: 30
-            periodSeconds: 10
-            timeoutSeconds: 5
-            failureThreshold: 3
+            {{- toYaml .Values.livenessProbe | nindent 12 }}
           readinessProbe:
-            httpGet:
-              path: /health
-              port: health
-            initialDelaySeconds: 5
-            periodSeconds: 5
-            timeoutSeconds: 3
-            failureThreshold: 3
+            {{- toYaml .Values.readinessProbe | nindent 12 }}
           resources:
-            {{- toYaml .Values.uploader.resources | nindent 12 }}
+            {{- toYaml .Values.resources | nindent 12 }}
           env:
             - name: REDIS_ADDR
               value: {{ .Values.redis.external.host }}:{{ .Values.redis.external.port }}
@@ -67,10 +64,28 @@ spec:
               value: {{ .Values.redis.external.password | quote }}
             - name: REDIS_DB
               value: {{ .Values.redis.external.database | quote }}
+            - name: GIN_MODE
+              value: {{ .Values.server.ginMode | quote }}
+            - name: API_PORT
+              value: {{ .Values.server.apiPort | quote }}
             - name: HEALTH_PORT
-              value: "8184"
+              value: {{ .Values.server.healthPort | quote }}
+            - name: CANVAS_TEMPLATE_PORT
+              value: {{ .Values.server.canvasTemplatePort | quote }}
+            - name: LOG_LEVEL
+              value: {{ .Values.server.logLevel | quote }}
             - name: POD_REGION
               value: {{ .Values.pod.region | quote }}
+            - name: POD_WORKERS
+              value: {{ .Values.pod.workers | quote }}
+            - name: AGORA_APP_ID
+              value: {{ .Values.agora.appId | quote }}
+            - name: AGORA_ACCESS_TOKEN
+              value: {{ .Values.agora.accessToken | quote }}
+            - name: AGORA_CHANNEL_NAME
+              value: {{ .Values.agora.channelName | quote }}
+            - name: AGORA_EGRESS_UID
+              value: {{ .Values.agora.egressUid | quote }}
             {{- if .Values.s3.enabled }}
             - name: S3_BUCKET
               value: {{ .Values.s3.bucket | quote }}
@@ -93,20 +108,27 @@ spec:
             {{- toYaml . | nindent 12 }}
           {{- end }}
           volumeMounts:
+            - name: config
+              mountPath: /opt/rtc_egress/config
+              readOnly: true
             {{- if .Values.persistence.enabled }}
             - name: recordings-storage
               mountPath: {{ .Values.persistence.recordings.mountPath }}
-              readOnly: true
             - name: snapshots-storage
               mountPath: {{ .Values.persistence.snapshots.mountPath }}
-              readOnly: true
             - name: logs-storage
               mountPath: {{ .Values.persistence.logs.mountPath }}
             {{- end }}
             {{- with .Values.extraVolumeMounts }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
+        {{- with .Values.sidecars }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
       volumes:
+        - name: config
+          configMap:
+            name: {{ include "rtc-egress.fullname" . }}-config
         {{- if .Values.persistence.enabled }}
         - name: recordings-storage
           persistentVolumeClaim:
@@ -132,4 +154,5 @@ spec:
       {{- with .Values.tolerations }}
       tolerations:
         {{- toYaml . | nindent 8 }}
-      {{- end }}{{- end }}
+      {{- end }}
+{{- end }}
