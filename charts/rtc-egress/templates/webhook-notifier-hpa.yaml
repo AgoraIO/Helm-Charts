@@ -1,0 +1,33 @@
+{{- if and .Values.webhookNotifier.enabled .Values.webhookNotifier.autoscaling.enabled }}
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ include "rtc-egress.fullname" . }}-webhook-notifier
+  labels:
+    {{- include "rtc-egress.labels" . | nindent 4 }}
+    app.kubernetes.io/component: webhook-notifier
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ include "rtc-egress.fullname" . }}-webhook-notifier
+  minReplicas: {{ .Values.webhookNotifier.autoscaling.minReplicas }}
+  maxReplicas: {{ .Values.webhookNotifier.autoscaling.maxReplicas }}
+  metrics:
+    {{- if .Values.webhookNotifier.autoscaling.targetCPUUtilizationPercentage }}
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.webhookNotifier.autoscaling.targetCPUUtilizationPercentage }}
+    {{- end }}
+    {{- if .Values.webhookNotifier.autoscaling.targetMemoryUtilizationPercentage }}
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.webhookNotifier.autoscaling.targetMemoryUtilizationPercentage }}
+    {{- end }}
+{{- end }}

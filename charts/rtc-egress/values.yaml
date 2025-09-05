@@ -6,21 +6,14 @@ global:
   imageRegistry: ""
   imagePullSecrets: []
 
-# Image configuration
-image:
-  registry: ghcr.io
-  repository: agoraio/rtc-egress
-  tag: "latest"
-  pullPolicy: Always
-
 # Service account
 serviceAccount:
   create: true
   name: ""
   annotations: {}
 
-# Pod configuration
-replicaCount: 1
+# Architecture mode: "monolithic" or "separated"
+architecture: "separated"
 
 # Pod security context
 podSecurityContext:
@@ -39,7 +32,155 @@ securityContext:
   runAsNonRoot: true
   runAsUser: 1001
 
-# Service configuration
+# API Server Configuration (HTTP API - publishes tasks to Redis)
+apiServer:
+  enabled: true
+  image:
+    registry: ghcr.io
+    repository: agoraio/api-server
+    tag: "latest"
+    pullPolicy: Always
+  replicaCount: 1
+  service:
+    type: ClusterIP
+    port: 8080
+    healthPort: 8181
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 200m
+      memory: 256Mi
+  autoscaling:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+
+# Egress Service Configuration (Native recording/snapshot with C++ workers)
+egress:
+  enabled: true
+  image:
+    registry: ghcr.io
+    repository: agoraio/egress
+    tag: "latest"
+    pullPolicy: Always
+  replicaCount: 3
+  workers: 4
+  service:
+    type: ClusterIP
+    healthPort: 8182
+  resources:
+    limits:
+      cpu: 2000m
+      memory: 4Gi
+    requests:
+      cpu: 1000m
+      memory: 2Gi
+  autoscaling:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+    redis:
+      enabled: true
+      queueName: "egress:record:*"
+      targetQueueLength: "10"
+
+# Flexible Recorder Service Configuration (Web recording via web recorder engine)
+flexibleRecorder:
+  enabled: true
+  image:
+    registry: ghcr.io
+    repository: agoraio/flexible-recorder
+    tag: "latest"
+    pullPolicy: Always
+  replicaCount: 2
+  workers: 1
+  service:
+    type: ClusterIP
+    healthPort: 8183
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 2Gi
+    requests:
+      cpu: 500m
+      memory: 1Gi
+  webRecorder:
+    baseUrl: "http://localhost:8001"
+    timeout: 30
+  autoscaling:
+    enabled: false
+    minReplicas: 2
+    maxReplicas: 8
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+    redis:
+      enabled: false
+      queueName: "egress:web:*"
+      targetQueueLength: "5"
+
+# Uploader Service Configuration (File upload to S3)
+uploader:
+  enabled: true
+  image:
+    registry: ghcr.io
+    repository: agoraio/uploader
+    tag: "latest"
+    pullPolicy: Always
+  replicaCount: 1
+  service:
+    type: ClusterIP
+    healthPort: 8184
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 200m
+      memory: 256Mi
+  autoscaling:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 3
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+
+# Webhook Notifier Service Configuration (updated for new architecture)
+webhookNotifier:
+  enabled: true
+  image:
+    registry: ghcr.io
+    repository: agoraio/webhook-notifier
+    tag: "latest"
+    pullPolicy: Always
+  replicaCount: 2
+  service:
+    type: ClusterIP
+    port: 8080
+    targetPort: 8080
+  resources:
+    limits:
+      cpu: 300m
+      memory: 512Mi
+    requests:
+      cpu: 150m
+      memory: 256Mi
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 4
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+  webhooks:
+    enabled: true
+    endpoints: []
+
+# Legacy monolithic service configuration (deprecated)
 service:
   type: ClusterIP
   ports:
@@ -76,7 +217,7 @@ ingress:
     #   hosts:
     #     - egress.local
 
-# Resources
+# Legacy resources (deprecated - use individual service resources)
 resources:
   limits:
     cpu: 2000m
@@ -99,13 +240,17 @@ podDisruptionBudget:
   enabled: false
   minAvailable: 1
 
-# Horizontal Pod Autoscaler
+# Legacy autoscaling (deprecated - use individual service autoscaling)
 autoscaling:
   enabled: false
-  minReplicas: 1
+  minReplicas: 3
   maxReplicas: 10
-  targetCPUUtilizationPercentage: 80
+  targetCPUUtilizationPercentage: 70
   targetMemoryUtilizationPercentage: 80
+  redis:
+    enabled: true
+    queueName: "egress:record:*"
+    targetQueueLength: "10"
 
 # Probes
 livenessProbe:
@@ -249,3 +394,53 @@ initContainers: []
 
 # Sidecar containers
 sidecars: []
+
+
+# Monitoring Configuration  
+monitoring:
+  enabled: true
+  # System + Performance metrics (automatic)
+  serviceMonitor:
+    enabled: true
+    interval: 30s
+    # Automatically scrapes:
+    # - HTTP request latency (from Gin framework)
+    # - HTTP error rates (4xx, 5xx responses) 
+    # - Request throughput (requests per second)
+    # - System metrics (CPU, memory, disk, network)
+  
+  # Redis metrics for queue-based scaling
+  redis:
+    enabled: true
+    exporter:
+      image: "oliver006/redis_exporter:v1.45.0"
+      resources:
+        limits:
+          cpu: 100m
+          memory: 128Mi
+        requests:
+          cpu: 50m
+          memory: 64Mi
+  
+  # Performance thresholds for alerting
+  alerts:
+    enabled: true
+    thresholds:
+      # Request performance
+      latency:
+        p95: 2000ms     # Alert if 95th percentile > 2s
+        p99: 5000ms     # Alert if 99th percentile > 5s
+      errorRate:
+        threshold: 5    # Alert if error rate > 5%
+      throughput:
+        min: 10         # Alert if RPS < 10 (indicates problems)
+      # System performance  
+      cpu:
+        threshold: 80   # Alert if CPU > 80%
+      memory:
+        threshold: 85   # Alert if memory > 85%
+      # Redis performance
+      redisQueue:
+        maxLength: 100  # Alert if queue > 100 tasks
+        maxWaitTime: 60 # Alert if tasks wait > 60s
+

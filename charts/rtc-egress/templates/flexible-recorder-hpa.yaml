@@ -1,0 +1,45 @@
+{{- if .Values.flexibleRecorder.autoscaling.enabled }}
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ include "rtc-egress.fullname" . }}-flexible-recorder
+  labels:
+    {{- include "rtc-egress.labels" . | nindent 4 }}
+    app.kubernetes.io/component: flexible-recorder
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ include "rtc-egress.fullname" . }}-flexible-recorder
+  minReplicas: {{ .Values.flexibleRecorder.autoscaling.minReplicas }}
+  maxReplicas: {{ .Values.flexibleRecorder.autoscaling.maxReplicas }}
+  metrics:
+    {{- if .Values.flexibleRecorder.autoscaling.targetCPUUtilizationPercentage }}
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.flexibleRecorder.autoscaling.targetCPUUtilizationPercentage }}
+    {{- end }}
+    {{- if .Values.flexibleRecorder.autoscaling.targetMemoryUtilizationPercentage }}
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.flexibleRecorder.autoscaling.targetMemoryUtilizationPercentage }}
+    {{- end }}
+    {{- if .Values.flexibleRecorder.autoscaling.redis.enabled }}
+    - type: External
+      external:
+        metric:
+          name: redis_queue_length
+          selector:
+            matchLabels:
+              queue: "{{ .Values.flexibleRecorder.autoscaling.redis.queueName }}"
+        target:
+          type: AverageValue
+          averageValue: {{ .Values.flexibleRecorder.autoscaling.redis.targetQueueLength | quote }}
+    {{- end }}
+{{- end }}

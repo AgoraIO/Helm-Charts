@@ -1,0 +1,19 @@
+{{- if .Values.webhookNotifier.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "rtc-egress.fullname" . }}-webhook-notifier
+  labels:
+    {{- include "rtc-egress.labels" . | nindent 4 }}
+    app.kubernetes.io/component: webhook-notifier
+spec:
+  type: {{ .Values.webhookNotifier.service.type }}
+  ports:
+    - port: {{ .Values.webhookNotifier.service.port }}
+      targetPort: {{ .Values.webhookNotifier.service.targetPort }}
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "rtc-egress.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: webhook-notifier
+{{- end }}

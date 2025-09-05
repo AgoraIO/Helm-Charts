@@ -1,9 +1,9 @@
 apiVersion: v2
 name: rtc-egress
-description: Agora RTC Egress Server - Real-time video recording, snapshot service and more
+description: Agora RTC Egress Suite - Separated 5-service architecture for real-time video recording, flexible recording, file upload, and webhook notifications
 type: application
-version: 1.0.6
-appVersion: "1.0.0"
+version: 1.1.0
+appVersion: "1.1.0"
 home: https://github.com/AgoraIO/RTC-Egress
 sources:
   - https://github.com/AgoraIO/RTC-Egress
@@ -23,6 +23,14 @@ annotations:
   category: Media
   licenses: MIT
   images: |
-    - name: rtc-egress
-      image: ghcr.io/agoraio/rtc-egress:latest
+    - name: api-server
+      image: ghcr.io/agoraio/api-server:latest
+    - name: egress
+      image: ghcr.io/agoraio/egress:latest
+    - name: flexible-recorder
+      image: ghcr.io/agoraio/flexible-recorder:latest
+    - name: uploader
+      image: ghcr.io/agoraio/uploader:latest
+    - name: webhook-notifier
+      image: ghcr.io/agoraio/webhook-notifier:latest
 dependencies: []

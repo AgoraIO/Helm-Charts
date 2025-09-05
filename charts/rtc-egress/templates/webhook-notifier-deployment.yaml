@@ -1,0 +1,125 @@
+{{- if .Values.webhookNotifier.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "rtc-egress.fullname" . }}-webhook-notifier
+  labels:
+    {{- include "rtc-egress.labels" . | nindent 4 }}
+    app.kubernetes.io/component: webhook-notifier
+spec:
+  replicas: {{ .Values.webhookNotifier.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "rtc-egress.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: webhook-notifier
+  template:
+    metadata:
+      labels:
+        {{- include "rtc-egress.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: webhook-notifier
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "rtc-egress.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: webhook-notifier
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.global.imageRegistry | default .Values.webhookNotifier.image.registry }}/{{ .Values.webhookNotifier.image.repository }}:{{ .Values.webhookNotifier.image.tag }}"
+          imagePullPolicy: {{ .Values.webhookNotifier.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.webhookNotifier.service.targetPort }}
+              protocol: TCP
+            - name: health
+              containerPort: 8185
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: health
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: health
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+          resources:
+            {{- toYaml .Values.webhookNotifier.resources | nindent 12 }}
+          env:
+            # Redis Configuration (for keyspace notifications)
+            {{- if .Values.redis.external.enabled }}
+            - name: REDIS_ADDR
+              value: "{{ .Values.redis.external.host }}:{{ .Values.redis.external.port }}"
+            {{- if .Values.redis.external.password }}
+            - name: REDIS_PASSWORD
+              value: {{ .Values.redis.external.password | quote }}
+            {{- end }}
+            - name: REDIS_DB
+              value: {{ .Values.redis.external.database | quote }}
+            {{- end }}
+            
+            # Server Configuration
+            - name: SERVER_PORT
+              value: {{ .Values.webhookNotifier.service.targetPort | quote }}
+            - name: HEALTH_PORT
+              value: "8185"
+            - name: LOG_LEVEL
+              value: {{ .Values.server.logLevel | quote }}
+            - name: POD_REGION
+              value: {{ .Values.pod.region | quote }}
+            
+            # Webhook Configuration
+            {{- if .Values.webhookNotifier.webhooks.enabled }}
+            - name: WEBHOOKS_ENABLED
+              value: "true"
+            {{- if .Values.webhookNotifier.webhooks.endpoints }}
+            - name: WEBHOOK_ENDPOINTS
+              value: {{ .Values.webhookNotifier.webhooks.endpoints | toJson | quote }}
+            {{- end }}
+            {{- else }}
+            - name: WEBHOOKS_ENABLED
+              value: "false"
+            {{- end }}
+          
+          volumeMounts:
+            - name: config
+              mountPath: /opt/rtc_egress/config
+              readOnly: true
+      
+      volumes:
+        - name: config
+          configMap:
+            name: {{ include "rtc-egress.fullname" . }}-config
+      
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}

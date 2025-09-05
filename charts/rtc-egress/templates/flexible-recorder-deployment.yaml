@@ -1,0 +1,119 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "rtc-egress.fullname" . }}-flexible-recorder
+  labels:
+    {{- include "rtc-egress.labels" . | nindent 4 }}
+    app.kubernetes.io/component: flexible-recorder
+spec:
+  replicas: {{ .Values.flexibleRecorder.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "rtc-egress.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: flexible-recorder
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "rtc-egress.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: flexible-recorder
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "rtc-egress.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: flexible-recorder
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.global.imageRegistry | default .Values.flexibleRecorder.image.registry }}/{{ .Values.flexibleRecorder.image.repository }}:{{ .Values.flexibleRecorder.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.flexibleRecorder.image.pullPolicy }}
+          ports:
+            - name: health
+              containerPort: 8183
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: health
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: health
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+          resources:
+            {{- toYaml .Values.flexibleRecorder.resources | nindent 12 }}
+          env:
+            - name: REDIS_ADDR
+              value: {{ .Values.redis.external.host }}:{{ .Values.redis.external.port }}
+            - name: REDIS_PASSWORD
+              value: {{ .Values.redis.external.password | quote }}
+            - name: REDIS_DB
+              value: {{ .Values.redis.external.database | quote }}
+            - name: HEALTH_PORT
+              value: "8183"
+            - name: POD_REGION
+              value: {{ .Values.pod.region | quote }}
+            - name: POD_WORKERS
+              value: {{ .Values.flexibleRecorder.workers | quote }}
+            - name: WEB_RECORDER_BASE_URL
+              value: {{ .Values.flexibleRecorder.webRecorder.baseUrl | quote }}
+            - name: WEB_RECORDER_TIMEOUT
+              value: {{ .Values.flexibleRecorder.webRecorder.timeout | quote }}
+            {{- with .Values.env }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          {{- with .Values.envFrom }}
+          envFrom:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            {{- if .Values.persistence.enabled }}
+            - name: recordings-storage
+              mountPath: {{ .Values.persistence.recordings.mountPath }}
+            - name: logs-storage
+              mountPath: {{ .Values.persistence.logs.mountPath }}
+            {{- end }}
+            {{- with .Values.extraVolumeMounts }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+      volumes:
+        {{- if .Values.persistence.enabled }}
+        - name: recordings-storage
+          persistentVolumeClaim:
+            claimName: {{ include "rtc-egress.fullname" . }}-recordings
+        - name: logs-storage
+          persistentVolumeClaim:
+            claimName: {{ include "rtc-egress.fullname" . }}-logs
+        {{- end }}
+        {{- with .Values.extraVolumes }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

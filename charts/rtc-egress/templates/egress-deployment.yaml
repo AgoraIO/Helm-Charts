@@ -1,0 +1,135 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "rtc-egress.fullname" . }}-egress
+  labels:
+    {{- include "rtc-egress.labels" . | nindent 4 }}
+    app.kubernetes.io/component: egress
+spec:
+  replicas: {{ .Values.egress.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "rtc-egress.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: egress
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "rtc-egress.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: egress
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "rtc-egress.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      {{- with .Values.initContainers }}
+      initContainers:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: egress
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.global.imageRegistry | default .Values.egress.image.registry }}/{{ .Values.egress.image.repository }}:{{ .Values.egress.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.egress.image.pullPolicy }}
+          ports:
+            - name: health
+              containerPort: 8182
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: health
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: health
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+          resources:
+            {{- toYaml .Values.egress.resources | nindent 12 }}
+          env:
+            - name: REDIS_ADDR
+              value: {{ .Values.redis.external.host }}:{{ .Values.redis.external.port }}
+            - name: REDIS_PASSWORD
+              value: {{ .Values.redis.external.password | quote }}
+            - name: REDIS_DB
+              value: {{ .Values.redis.external.database | quote }}
+            - name: HEALTH_PORT
+              value: "8182"
+            - name: POD_REGION
+              value: {{ .Values.pod.region | quote }}
+            - name: POD_WORKERS
+              value: {{ .Values.egress.workers | quote }}
+            - name: AGORA_APP_ID
+              value: {{ .Values.agora.appId | quote }}
+            - name: AGORA_ACCESS_TOKEN
+              value: {{ .Values.agora.accessToken | quote }}
+            - name: AGORA_CHANNEL_NAME
+              value: {{ .Values.agora.channelName | quote }}
+            - name: AGORA_EGRESS_UID
+              value: {{ .Values.agora.egressUid | quote }}
+            {{- with .Values.env }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          {{- with .Values.envFrom }}
+          envFrom:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            {{- if .Values.persistence.enabled }}
+            - name: recordings-storage
+              mountPath: {{ .Values.persistence.recordings.mountPath }}
+            - name: snapshots-storage
+              mountPath: {{ .Values.persistence.snapshots.mountPath }}
+            - name: logs-storage
+              mountPath: {{ .Values.persistence.logs.mountPath }}
+            {{- end }}
+            {{- with .Values.extraVolumeMounts }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+        {{- with .Values.sidecars }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      volumes:
+        {{- if .Values.persistence.enabled }}
+        - name: recordings-storage
+          persistentVolumeClaim:
+            claimName: {{ include "rtc-egress.fullname" . }}-recordings
+        - name: snapshots-storage
+          persistentVolumeClaim:
+            claimName: {{ include "rtc-egress.fullname" . }}-snapshots
+        - name: logs-storage
+          persistentVolumeClaim:
+            claimName: {{ include "rtc-egress.fullname" . }}-logs
+        {{- end }}
+        {{- with .Values.extraVolumes }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

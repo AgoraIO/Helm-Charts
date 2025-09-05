@@ -1,0 +1,266 @@
+# Production values for separated 5-service architecture
+# Override default values.yaml for production deployment
+
+# Architecture mode
+architecture: "separated"
+
+# Production replica counts as requested:
+# - 1 api-server
+# - 3 egress  
+# - 2 flexible-recorder (web)
+# - 1 uploader
+# - 2 webhook-notifier
+
+# API Server Configuration (1 instance with optional autoscaling)
+apiServer:
+  enabled: true
+  replicaCount: 1
+  image:
+    registry: ghcr.io
+    repository: agoraio/api-server
+    tag: "latest"
+    pullPolicy: Always
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+    requests:
+      cpu: 500m
+      memory: 512Mi
+  autoscaling:
+    enabled: true
+    minReplicas: 1
+    maxReplicas: 3
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+
+# Egress Service Configuration (3 instances with autoscaling)
+egress:
+  enabled: true
+  replicaCount: 3
+  workers: 4
+  image:
+    registry: ghcr.io
+    repository: agoraio/egress
+    tag: "latest"
+    pullPolicy: Always
+  resources:
+    limits:
+      cpu: 4000m
+      memory: 8Gi
+    requests:
+      cpu: 2000m
+      memory: 4Gi
+  autoscaling:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 15
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+    redis:
+      enabled: true
+      queueName: "egress:record:*"
+      targetQueueLength: "5"  # Scale up faster in production
+
+# Flexible Recorder Service Configuration (2 instances with autoscaling)
+flexibleRecorder:
+  enabled: true
+  replicaCount: 2
+  workers: 2
+  image:
+    registry: ghcr.io
+    repository: agoraio/flexible-recorder
+    tag: "latest"
+    pullPolicy: Always
+  resources:
+    limits:
+      cpu: 2000m
+      memory: 4Gi
+    requests:
+      cpu: 1000m
+      memory: 2Gi
+  webRecorder:
+    baseUrl: "http://web-recorder-service:8001"
+    timeout: 60  # Longer timeout for production
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 6
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+    redis:
+      enabled: true
+      queueName: "egress:web:*"
+      targetQueueLength: "3"
+
+# Uploader Service Configuration (1 instance with autoscaling to avoid bottlenecks)
+uploader:
+  enabled: true
+  replicaCount: 1
+  image:
+    registry: ghcr.io
+    repository: agoraio/uploader
+    tag: "latest"
+    pullPolicy: Always
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+    requests:
+      cpu: 500m
+      memory: 512Mi
+  autoscaling:
+    enabled: true
+    minReplicas: 1
+    maxReplicas: 4
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+
+# Webhook Notifier Service Configuration (2 instances with autoscaling)
+webhookNotifier:
+  enabled: true
+  replicaCount: 2
+  image:
+    registry: ghcr.io
+    repository: agoraio/webhook-notifier
+    tag: "latest"
+    pullPolicy: Always
+  resources:
+    limits:
+      cpu: 500m
+      memory: 1Gi
+    requests:
+      cpu: 250m
+      memory: 512Mi
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 8
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+
+# Production Redis Configuration
+redis:
+  external:
+    enabled: true
+    host: "redis-cluster.production.svc.cluster.local"
+    port: 6379
+    password: "${REDIS_PASSWORD}"  # Use from secret
+    database: 0
+
+# Production Agora Configuration
+agora:
+  appId: "${AGORA_APP_ID}"  # Use from secret
+  accessToken: "${AGORA_ACCESS_TOKEN}"  # Use from secret
+  channelName: "production-egress"
+  egressUid: "42"
+
+# Production persistence with larger volumes
+persistence:
+  enabled: true
+  recordings:
+    storageClass: "fast-ssd"
+    accessMode: ReadWriteMany  # Multiple pods need access
+    size: 1Ti
+    mountPath: /recordings
+  snapshots:
+    storageClass: "fast-ssd"
+    accessMode: ReadWriteMany
+    size: 500Gi
+    mountPath: /snapshots
+  logs:
+    storageClass: "standard"
+    accessMode: ReadWriteMany
+    size: 100Gi
+    mountPath: /var/log/rtc_egress
+
+# Production S3 configuration
+s3:
+  enabled: true
+  bucket: "${S3_BUCKET}"  # Use from secret
+  region: "us-west-2"
+  accessKey: "${S3_ACCESS_KEY}"  # Use from secret
+  secretKey: "${S3_SECRET_KEY}"  # Use from secret
+  endpoint: ""  # Use default AWS endpoint
+
+# Pod disruption budgets for high availability
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 50%  # Ensure at least half pods available during updates
+
+# Production pod settings
+pod:
+  region: "us-west-2"
+
+# Production server settings
+server:
+  ginMode: "release"
+  logLevel: "info"
+
+# Production monitoring
+monitoring:
+  enabled: true
+  serviceMonitor:
+    enabled: true
+    interval: 15s  # More frequent monitoring in production
+  redis:
+    enabled: true
+  alerts:
+    enabled: true
+    thresholds:
+      latency:
+        p95: 1000ms  # Stricter SLA
+        p99: 3000ms
+      errorRate:
+        threshold: 2  # Lower error tolerance
+      cpu:
+        threshold: 75
+      memory:
+        threshold: 80
+      redisQueue:
+        maxLength: 50
+        maxWaitTime: 30
+
+# Security context for production
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1001
+  runAsGroup: 1001
+  fsGroup: 1001
+  seccompProfile:
+    type: RuntimeDefault
+
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+    - ALL
+  readOnlyRootFilesystem: false
+  runAsNonRoot: true
+  runAsUser: 1001
+
+# Node selector for production nodes
+nodeSelector:
+  node-type: "production"
+  instance-type: "compute-optimized"
+
+# Tolerations for production workloads
+tolerations:
+  - key: "production-workload"
+    operator: "Equal"
+    value: "true"
+    effect: "NoSchedule"
+
+# Affinity rules to spread pods across nodes
+affinity:
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+    - weight: 100
+      podAffinityTerm:
+        labelSelector:
+          matchExpressions:
+          - key: app.kubernetes.io/name
+            operator: In
+            values:
+            - rtc-egress
+        topologyKey: kubernetes.io/hostname

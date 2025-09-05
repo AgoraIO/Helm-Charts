@@ -1,0 +1,19 @@
+{{- if and .Values.monitoring.enabled .Values.redis.external.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "rtc-egress.fullname" . }}-redis-exporter
+  labels:
+    {{- include "rtc-egress.labels" . | nindent 4 }}
+    app.kubernetes.io/component: redis-exporter
+spec:
+  type: ClusterIP
+  ports:
+    - port: 9121
+      targetPort: 9121
+      protocol: TCP
+      name: metrics
+  selector:
+    {{- include "rtc-egress.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: redis-exporter
+{{- end }}

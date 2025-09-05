@@ -1,6 +1,22 @@
-# Agora RTC Egress Server Helm Chart
+# Agora RTC Egress Suite Helm Chart
 
-This Helm chart deploys the Agora RTC Egress Server on a Kubernetes cluster using the Helm package manager.
+This Helm chart deploys the complete Agora RTC Egress Suite on a Kubernetes cluster using the Helm package manager.
+
+## Architecture Overview
+
+The suite supports **separated 5-service architecture** for production deployments:
+
+### Production Architecture (Recommended)
+
+- **API Server**: 2 pods - HTTP API that publishes tasks to Redis queues (port 8080)
+- **Egress**: 3-15 pods with auto-scaling - Native C++ recording/snapshot workers (health port 8182)
+- **Flexible Recorder**: 2 pods - Web recording via web recorder engine (health port 8183)
+- **Uploader**: 1 pod - File upload service with S3 integration (health port 8184)
+- **Webhook Notifier**: 2-8 pods with auto-scaling - Redis keyspace notifications → HTTP webhooks (port 8080, health 8185)
+
+### Legacy Monolithic Architecture (Deprecated)
+
+The chart also supports the legacy monolithic mode for backward compatibility, but separated architecture is recommended for production.
 
 ## Prerequisites
 
@@ -11,7 +27,9 @@ This Helm chart deploys the Agora RTC Egress Server on a Kubernetes cluster usin
 
 ## Installing the Chart
 
-To install the chart from the Agora Helm repository:
+### Production Installation (Separated Architecture)
+
+For production with the recommended separated 5-service architecture:
 
 ```bash
 # Add the Agora Helm repository
@@ -19,11 +37,25 @@ helm repo add agora https://helm.agora.build
 helm repo update
 
 # Create namespace
-kubectl create namespace com.myrtc.egress
+kubectl create namespace rtc-egress-prod
 
-# Install the chart
+# Install with production values (1 api-server, 3 egress, 2 flexible-recorder, 1 uploader, 2 webhook-notifier)
+helm install rtc-egress agora/rtc-egress \
+  --namespace rtc-egress-prod \
+  --values values-production-separated.yaml \
+  --set agora.appId=YOUR_AGORA_APP_ID \
+  --set redis.external.host=YOUR_REDIS_HOST \
+  --set s3.bucket=YOUR_S3_BUCKET
+```
+
+### Development Installation
+
+For development or testing:
+
+```bash
+# Install with default values (separated architecture)
 helm install my-rtc-egress agora/rtc-egress \
-  --namespace com.myrtc.egress \
+  --namespace rtc-egress-dev \
   --set agora.appId=YOUR_AGORA_APP_ID \
   --set redis.external.host=YOUR_REDIS_HOST \
   --values values.yaml
@@ -133,12 +165,31 @@ The following table lists the configurable parameters of the rtc-egress chart an
 
 ## Examples
 
-### Basic Installation
+### Basic Installation (All Services)
 
 ```bash
 helm install my-egress agora/rtc-egress \
   --set agora.appId=your-app-id \
   --set redis.external.host=redis.example.com
+```
+
+### Selective Service Installation
+
+```bash
+# Install only core egress service
+helm install my-egress agora/rtc-egress \
+  --set agora.appId=your-app-id \
+  --set redis.external.host=redis.example.com \
+  --set webDispatch.enabled=false \
+  --set webhookNotifier.enabled=false \
+  --set webRecorder.enabled=false
+
+# Install with webhook notifications
+helm install my-egress agora/rtc-egress \
+  --set agora.appId=your-app-id \
+  --set redis.external.host=redis.example.com \
+  --set webhookNotifier.webhooks.endpoints[0].url=https://your-app.com/webhook \
+  --set webhookNotifier.webhooks.endpoints[0].events[0]=recording.completed
 ```
 
 ### Production Installation

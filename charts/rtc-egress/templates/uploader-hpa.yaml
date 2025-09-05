@@ -1,0 +1,33 @@
+{{- if .Values.uploader.autoscaling.enabled }}
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ include "rtc-egress.fullname" . }}-uploader
+  labels:
+    {{- include "rtc-egress.labels" . | nindent 4 }}
+    app.kubernetes.io/component: uploader
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ include "rtc-egress.fullname" . }}-uploader
+  minReplicas: {{ .Values.uploader.autoscaling.minReplicas }}
+  maxReplicas: {{ .Values.uploader.autoscaling.maxReplicas }}
+  metrics:
+    {{- if .Values.uploader.autoscaling.targetCPUUtilizationPercentage }}
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.uploader.autoscaling.targetCPUUtilizationPercentage }}
+    {{- end }}
+    {{- if .Values.uploader.autoscaling.targetMemoryUtilizationPercentage }}
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.uploader.autoscaling.targetMemoryUtilizationPercentage }}
+    {{- end }}
+{{- end }}

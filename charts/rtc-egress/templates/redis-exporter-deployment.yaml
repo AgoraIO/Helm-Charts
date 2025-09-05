@@ -1,0 +1,57 @@
+{{- if and .Values.monitoring.enabled .Values.redis.external.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "rtc-egress.fullname" . }}-redis-exporter
+  labels:
+    {{- include "rtc-egress.labels" . | nindent 4 }}
+    app.kubernetes.io/component: redis-exporter
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "rtc-egress.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: redis-exporter
+  template:
+    metadata:
+      labels:
+        {{- include "rtc-egress.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: redis-exporter
+    spec:
+      containers:
+        - name: redis-exporter
+          image: "oliver006/redis_exporter:v1.45.0"
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: metrics
+              containerPort: 9121
+              protocol: TCP
+          env:
+            - name: REDIS_ADDR
+              value: "{{ .Values.redis.external.host }}:{{ .Values.redis.external.port }}"
+            {{- if .Values.redis.external.password }}
+            - name: REDIS_PASSWORD
+              value: {{ .Values.redis.external.password | quote }}
+            {{- end }}
+            - name: REDIS_EXPORTER_INCL_SYSTEM_METRICS
+              value: "true"
+          resources:
+            limits:
+              cpu: 100m
+              memory: 128Mi
+            requests:
+              cpu: 50m
+              memory: 64Mi
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 9121
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 9121
+            initialDelaySeconds: 5
+            periodSeconds: 5
+{{- end }}

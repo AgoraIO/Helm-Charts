@@ -1,0 +1,104 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "rtc-egress.fullname" . }}-api-server
+  labels:
+    {{- include "rtc-egress.labels" . | nindent 4 }}
+    app.kubernetes.io/component: api-server
+spec:
+  replicas: {{ .Values.apiServer.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "rtc-egress.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: api-server
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "rtc-egress.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: api-server
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "rtc-egress.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: api-server
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.global.imageRegistry | default .Values.apiServer.image.registry }}/{{ .Values.apiServer.image.repository }}:{{ .Values.apiServer.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.apiServer.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+            - name: health
+              containerPort: 8181
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: health
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: health
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+          resources:
+            {{- toYaml .Values.apiServer.resources | nindent 12 }}
+          env:
+            - name: REDIS_ADDR
+              value: {{ .Values.redis.external.host }}:{{ .Values.redis.external.port }}
+            - name: REDIS_PASSWORD
+              value: {{ .Values.redis.external.password | quote }}
+            - name: REDIS_DB
+              value: {{ .Values.redis.external.database | quote }}
+            - name: API_PORT
+              value: "8080"
+            - name: HEALTH_PORT
+              value: "8181"
+            - name: POD_REGION
+              value: {{ .Values.pod.region | quote }}
+            {{- with .Values.env }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          {{- with .Values.envFrom }}
+          envFrom:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.extraVolumeMounts }}
+          volumeMounts:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+      {{- with .Values.extraVolumes }}
+      volumes:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
