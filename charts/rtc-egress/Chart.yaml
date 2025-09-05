@@ -2,7 +2,7 @@ apiVersion: v2
 name: rtc-egress
 description: Agora RTC Egress Suite - Separated 5-service architecture for real-time video recording, flexible recording, file upload, and webhook notifications
 type: application
-version: 1.2.0
+version: 1.2.1
 appVersion: "v1.2.6"
 home: https://github.com/AgoraIO/RTC-Egress
 sources:
