@@ -60,6 +60,7 @@ kubectl get pods -n myrtc-egress
 ```
 
 ```bash
+kubectl describe pod -n myrtc-egress my-rtc-egress-69b7b86d5b-sfzcq
 kubectl logs -n myrtc-egress my-rtc-egress-69b7b86d5b-sfzcq
 ```
 
