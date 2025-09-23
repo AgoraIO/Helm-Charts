@@ -25,7 +25,6 @@ data:
     # Server configuration
     health_port: {{ .Values.server.healthPort }}
     api_port: {{ .Values.server.apiPort }}
-    canvas_template_port: {{ .Values.server.canvasTemplatePort }}
 
     # Redis Configuration
     redis:

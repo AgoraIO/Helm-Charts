@@ -9,10 +9,10 @@ The suite supports **two deployment architectures**:
 ### Production Architecture (Separated - Recommended)
 
 - **API Server**: 1 pod (default) - HTTP API that publishes tasks to Redis queues (port 8080, health 8181)
-- **Egress**: 3 pods (default) with auto-scaling - Native C++ recording/snapshot workers (health port 8182)
-- **Flexible Recorder**: 2 pods (default) - Web recording via web recorder engine (health port 8183)
-- **Uploader**: 1 pod (default) - File upload service with S3 integration (health port 8184)
-- **Webhook Notifier**: 2 pods (default) with auto-scaling - Redis keyspace notifications → HTTP webhooks (port 8080, health 8185)
+- **Egress**: 3 pods (default) with auto-scaling - Native C++ recording/snapshot workers (health port 8192)
+- **Flexible Recorder**: 2 pods (default) - Web recording via web recorder engine (health port 8193)
+- **Uploader**: 1 pod (default) - File upload service with S3 integration (health port 8194)
+- **Webhook Notifier**: 2 pods (default) with auto-scaling - Redis keyspace notifications → HTTP webhooks (port 8080, health 8195)
 
 ### Monolithic Architecture (Legacy)
 
@@ -218,7 +218,6 @@ The chart supports both **separated** and **monolithic** architectures.
 | `server.ginMode` | Gin framework mode | `debug` (dev), `release` (prod) |
 | `server.apiPort` | API server port | `8080` |
 | `server.healthPort` | Health check port | `8182` |
-| `server.canvasTemplatePort` | Canvas template port | `3000` |
 | `server.logLevel` | Log level | `debug` (dev), `info` (prod) |
 | `pod.region` | Pod region identifier | `""` |
 | `pod.workers` | Number of worker processes | `4` |
@@ -321,10 +320,10 @@ helm install rtc-egress agora/rtc-egress \
 
 Each service provides health endpoints:
 - API Server: `http://pod-ip:8181/health`
-- Egress: `http://pod-ip:8182/health`
-- Flexible Recorder: `http://pod-ip:8183/health`
-- Uploader: `http://pod-ip:8184/health`
-- Webhook Notifier: `http://pod-ip:8185/health`
+- Egress: `http://pod-ip:8192/health`
+- Flexible Recorder: `http://pod-ip:8193/health`
+- Uploader: `http://pod-ip:8194/health`
+- Webhook Notifier: `http://pod-ip:8195/health`
 
 ### Monitoring Commands
 

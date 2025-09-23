@@ -48,9 +48,7 @@ spec:
             - name: health
               containerPort: {{ .Values.server.healthPort }}
               protocol: TCP
-            - name: canvas
-              containerPort: {{ .Values.server.canvasTemplatePort }}
-              protocol: TCP
+            # canvas port removed
           livenessProbe:
             {{- toYaml .Values.livenessProbe | nindent 12 }}
           readinessProbe:
@@ -70,8 +68,7 @@ spec:
               value: {{ .Values.server.apiPort | quote }}
             - name: HEALTH_PORT
               value: {{ .Values.server.healthPort | quote }}
-            - name: CANVAS_TEMPLATE_PORT
-              value: {{ .Values.server.canvasTemplatePort | quote }}
+            # CANVAS_TEMPLATE_PORT removed
             - name: LOG_LEVEL
               value: {{ .Values.server.logLevel | quote }}
             - name: POD_REGION

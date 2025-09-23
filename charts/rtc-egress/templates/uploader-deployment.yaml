@@ -34,13 +34,14 @@ spec:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:
         - name: uploader
+          workingDir: "/"
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.global.imageRegistry | default .Values.uploader.image.registry }}/{{ .Values.uploader.image.repository }}:{{ .Values.uploader.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.uploader.image.pullPolicy }}
           ports:
             - name: health
-              containerPort: 8184
+              containerPort: {{ .Values.uploader.service.healthPort }}
               protocol: TCP
           livenessProbe:
             httpGet:
@@ -68,7 +69,7 @@ spec:
             - name: REDIS_DB
               value: {{ .Values.redis.external.database | quote }}
             - name: HEALTH_PORT
-              value: "8184"
+              value: {{ .Values.uploader.service.healthPort | quote }}
             - name: POD_REGION
               value: {{ .Values.pod.region | quote }}
             {{- if .Values.s3.enabled }}
@@ -103,6 +104,10 @@ spec:
             - name: logs-storage
               mountPath: {{ .Values.persistence.logs.mountPath }}
             {{- end }}
+            {{- if .Values.uploader.webRecorder.createEmptyDir }}
+            - name: web-recorder
+              mountPath: {{ .Values.uploader.webRecorder.mountPath | default "/web_recorder" }}
+            {{- end }}
             {{- with .Values.extraVolumeMounts }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
@@ -117,6 +122,10 @@ spec:
         - name: logs-storage
           persistentVolumeClaim:
             claimName: {{ include "rtc-egress.fullname" . }}-logs
+        {{- end }}
+        {{- if .Values.uploader.webRecorder.createEmptyDir }}
+        - name: web-recorder
+          emptyDir: {}
         {{- end }}
         {{- with .Values.extraVolumes }}
         {{- toYaml . | nindent 8 }}

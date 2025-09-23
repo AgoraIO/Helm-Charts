@@ -106,5 +106,4 @@ server:
   ginMode: "release"
   apiPort: 8080
   healthPort: 8182
-  canvasTemplatePort: 3000
   logLevel: "info"

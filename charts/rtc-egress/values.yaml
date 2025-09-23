@@ -71,7 +71,7 @@ egress:
   workers: 4
   service:
     type: ClusterIP
-    healthPort: 8182
+    healthPort: 8192
   resources:
     limits:
       cpu: 2000m
@@ -94,7 +94,7 @@ flexibleRecorder:
   workers: 1
   service:
     type: ClusterIP
-    healthPort: 8183
+    healthPort: 8193
   resources:
     limits:
       cpu: 1000m
@@ -119,7 +119,7 @@ uploader:
   replicaCount: 1
   service:
     type: ClusterIP
-    healthPort: 8184
+    healthPort: 8194
   resources:
     limits:
       cpu: 500m
@@ -129,6 +129,10 @@ uploader:
       memory: 256Mi
   autoscaling:
     enabled: false
+  # Ensure default relative watch paths exist in K8s/Docker
+  webRecorder:
+    createEmptyDir: true
+    mountPath: "/web_recorder"
 
 # Webhook Notifier Service Configuration - Development defaults
 webhookNotifier:
@@ -143,6 +147,7 @@ webhookNotifier:
     type: ClusterIP
     port: 8080
     targetPort: 8080
+    healthPort: 8195
   resources:
     limits:
       cpu: 300m
@@ -211,7 +216,6 @@ server:
   ginMode: "debug"
   apiPort: 8080
   healthPort: 8182
-  canvasTemplatePort: 3000
   logLevel: "debug"
 
 # Monitoring disabled for development
@@ -357,4 +361,4 @@ snapshots:
   users: "9032"
   layout: "flat"
   intervalInMs: 20000
-  quality: 0
+  quality: 90

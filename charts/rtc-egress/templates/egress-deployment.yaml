@@ -44,7 +44,7 @@ spec:
           imagePullPolicy: {{ .Values.egress.image.pullPolicy }}
           ports:
             - name: health
-              containerPort: 8182
+              containerPort: {{ .Values.egress.service.healthPort }}
               protocol: TCP
           livenessProbe:
             httpGet:
@@ -72,7 +72,7 @@ spec:
             - name: REDIS_DB
               value: {{ .Values.redis.external.database | quote }}
             - name: HEALTH_PORT
-              value: "8182"
+              value: {{ .Values.egress.service.healthPort | quote }}
             - name: POD_REGION
               value: {{ .Values.pod.region | quote }}
             - name: POD_WORKERS

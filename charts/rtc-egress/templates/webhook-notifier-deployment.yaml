@@ -44,7 +44,7 @@ spec:
               containerPort: {{ .Values.webhookNotifier.service.targetPort }}
               protocol: TCP
             - name: health
-              containerPort: 8185
+              containerPort: {{ .Values.webhookNotifier.service.healthPort }}
               protocol: TCP
           livenessProbe:
             httpGet:
@@ -81,7 +81,7 @@ spec:
             - name: SERVER_PORT
               value: {{ .Values.webhookNotifier.service.targetPort | quote }}
             - name: HEALTH_PORT
-              value: "8185"
+              value: {{ .Values.webhookNotifier.service.healthPort | quote }}
             - name: LOG_LEVEL
               value: {{ .Values.server.logLevel | quote }}
             - name: POD_REGION
