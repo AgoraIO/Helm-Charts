@@ -38,7 +38,7 @@ spec:
           workingDir: "/"
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
-          image: "{{ .Values.global.imageRegistry | default .Values.uploader.image.registry }}/{{ .Values.uploader.image.repository }}:{{ .Values.uploader.image.tag | default .Chart.AppVersion }}"
+          image: "{{ .Values.global.imageRegistry | default .Values.uploader.image.registry }}/{{ .Values.uploader.image.repository }}:{{ .Values.uploader.image.tag | default .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.uploader.image.pullPolicy }}
           ports:
             - name: health
@@ -86,6 +86,12 @@ spec:
             - name: S3_ENDPOINT
               value: {{ .Values.s3.endpoint | quote }}
             {{- end }}
+            {{- end }}
+            - name: CONFIG_DIR
+              value: {{ .Values.config.dir | quote }}
+            {{- if .Values.config.file }}
+            - name: CONFIG_FILE
+              value: {{ .Values.config.file | quote }}
             {{- end }}
             {{- with .Values.env }}
             {{- toYaml . | nindent 12 }}

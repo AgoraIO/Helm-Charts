@@ -41,7 +41,7 @@ spec:
         - name: egress
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
-          image: "{{ .Values.global.imageRegistry | default .Values.egress.image.registry }}/{{ .Values.egress.image.repository }}:{{ .Values.egress.image.tag | default .Chart.AppVersion }}"
+          image: "{{ .Values.global.imageRegistry | default .Values.egress.image.registry }}/{{ .Values.egress.image.repository }}:{{ .Values.egress.image.tag | default .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.egress.image.pullPolicy }}
           ports:
             - name: health
@@ -86,6 +86,12 @@ spec:
               value: {{ .Values.agora.channelName | quote }}
             - name: AGORA_EGRESS_UID
               value: {{ .Values.agora.egressUid | quote }}
+            - name: CONFIG_DIR
+              value: {{ .Values.config.dir | quote }}
+            {{- if .Values.config.file }}
+            - name: CONFIG_FILE
+              value: {{ .Values.config.file | quote }}
+            {{- end }}
             {{- with .Values.env }}
             {{- toYaml . | nindent 12 }}
             {{- end }}

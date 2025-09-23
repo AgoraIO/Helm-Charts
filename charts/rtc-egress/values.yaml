@@ -218,6 +218,11 @@ server:
   healthPort: 8182
   logLevel: "debug"
 
+# Config path defaults for all services (used to set CONFIG_DIR/CONFIG_FILE env)
+config:
+  dir: "/opt/rtc_egress/config"
+  file: ""
+
 # Monitoring disabled for development
 monitoring:
   enabled: false

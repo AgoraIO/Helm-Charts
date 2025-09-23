@@ -37,7 +37,7 @@ spec:
         - name: api-server
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
-          image: "{{ .Values.global.imageRegistry | default .Values.apiServer.image.registry }}/{{ .Values.apiServer.image.repository }}:{{ .Values.apiServer.image.tag | default .Chart.AppVersion }}"
+          image: "{{ .Values.global.imageRegistry | default .Values.apiServer.image.registry }}/{{ .Values.apiServer.image.repository }}:{{ .Values.apiServer.image.tag | default .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.apiServer.image.pullPolicy }}
           ports:
             - name: http
@@ -77,6 +77,12 @@ spec:
               value: {{ .Values.apiServer.service.healthPort | quote }}
             - name: POD_REGION
               value: {{ .Values.pod.region | quote }}
+            - name: CONFIG_DIR
+              value: {{ .Values.config.dir | quote }}
+            {{- if .Values.config.file }}
+            - name: CONFIG_FILE
+              value: {{ .Values.config.file | quote }}
+            {{- end }}
             {{- with .Values.env }}
             {{- toYaml . | nindent 12 }}
             {{- end }}

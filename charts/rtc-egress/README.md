@@ -419,3 +419,14 @@ Please read the [contributing guidelines](../../../CONTRIBUTING.md) before submi
 ## License
 
 This chart is licensed under the MIT License. See [LICENSE](../../../LICENSE) for more information.
+### Global Image Tag
+
+- You may set a single global image tag for all services using `image.tag`. Each service’s tag (`{service}.image.tag`) still takes precedence when set, but if omitted the chart will fall back to `image.tag`, and then the chart appVersion.
+
+Example:
+
+helm install my-rtc-egress agora/rtc-egress \
+  --namespace rtc-egress \
+  --set image.tag=2025-09-19-775b285 \
+  --set agora.appId=$AGORA_APP_ID \
+  --set redis.external.host=$REDIS_HOST

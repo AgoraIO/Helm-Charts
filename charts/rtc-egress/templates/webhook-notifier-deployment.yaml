@@ -37,7 +37,7 @@ spec:
         - name: webhook-notifier
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
-          image: "{{ .Values.global.imageRegistry | default .Values.webhookNotifier.image.registry }}/{{ .Values.webhookNotifier.image.repository }}:{{ .Values.webhookNotifier.image.tag }}"
+          image: "{{ .Values.global.imageRegistry | default .Values.webhookNotifier.image.registry }}/{{ .Values.webhookNotifier.image.repository }}:{{ .Values.webhookNotifier.image.tag | default .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.webhookNotifier.image.pullPolicy }}
           ports:
             - name: http
@@ -86,6 +86,12 @@ spec:
               value: {{ .Values.server.logLevel | quote }}
             - name: POD_REGION
               value: {{ .Values.pod.region | quote }}
+            - name: CONFIG_DIR
+              value: {{ .Values.config.dir | quote }}
+            {{- if .Values.config.file }}
+            - name: CONFIG_FILE
+              value: {{ .Values.config.file | quote }}
+            {{- end }}
             
             # Webhook Configuration
             {{- if .Values.webhookNotifier.webhooks.enabled }}

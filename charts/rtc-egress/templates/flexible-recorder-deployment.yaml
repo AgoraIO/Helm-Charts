@@ -37,7 +37,7 @@ spec:
         - name: flexible-recorder
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
-          image: "{{ .Values.global.imageRegistry | default .Values.flexibleRecorder.image.registry }}/{{ .Values.flexibleRecorder.image.repository }}:{{ .Values.flexibleRecorder.image.tag | default .Chart.AppVersion }}"
+          image: "{{ .Values.global.imageRegistry | default .Values.flexibleRecorder.image.registry }}/{{ .Values.flexibleRecorder.image.repository }}:{{ .Values.flexibleRecorder.image.tag | default .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.flexibleRecorder.image.pullPolicy }}
           ports:
             - name: health
@@ -78,6 +78,12 @@ spec:
               value: {{ .Values.flexibleRecorder.webRecorder.baseUrl | quote }}
             - name: WEB_RECORDER_TIMEOUT
               value: {{ .Values.flexibleRecorder.webRecorder.timeout | quote }}
+            - name: CONFIG_DIR
+              value: {{ .Values.config.dir | quote }}
+            {{- if .Values.config.file }}
+            - name: CONFIG_FILE
+              value: {{ .Values.config.file | quote }}
+            {{- end }}
             {{- with .Values.env }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
