@@ -23,7 +23,7 @@ data:
     egress_home: "/tmp/egress"
 
     # Server configuration
-    health_port: {{ .Values.server.healthPort }}
+    health_port: {{ .Values.egress.service.healthPort }}
     api_port: {{ .Values.server.apiPort }}
 
     # Redis Configuration
@@ -126,3 +126,139 @@ data:
       api_timeout: 30
       cleanup_interval: 3600
       max_recording_age: 86400
+
+  uploader_config.yaml: |
+    # Health server configuration
+    health_port: {{ .Values.uploader.service.healthPort }}
+
+    # Directories to watch for uploads
+    watch:
+      directories:
+        - {{ .Values.persistence.recordings.mountPath | quote }}
+        - {{ (.Values.uploader.webRecorder.mountPath | default "/web_recorder") | quote }}
+        - {{ .Values.persistence.snapshots.mountPath | quote }}
+
+    # S3 configuration
+    s3:
+      enabled: {{ .Values.s3.enabled }}
+      bucket: {{ .Values.s3.bucket | quote }}
+      region: {{ .Values.s3.region | quote }}
+      {{- if .Values.s3.accessKey }}
+      access_key: {{ .Values.s3.accessKey | quote }}
+      {{- end }}
+      {{- if .Values.s3.secretKey }}
+      secret_key: {{ .Values.s3.secretKey | quote }}
+      {{- end }}
+      {{- if .Values.s3.endpoint }}
+      endpoint: {{ .Values.s3.endpoint | quote }}
+      {{- end }}
+
+    log:
+      level: {{ .Values.server.logLevel | quote }}
+
+  api_server_config.yaml: |
+    # Server configuration
+    api_port: {{ .Values.apiServer.service.port }}
+    health_port: {{ .Values.apiServer.service.healthPort }}
+
+    # Redis configuration
+    redis:
+      {{- if .Values.redis.external.enabled }}
+      addr: "{{ .Values.redis.external.host }}:{{ .Values.redis.external.port }}"
+      {{- if .Values.redis.external.password }}
+      password: {{ .Values.redis.external.password | quote }}
+      {{- else }}
+      password: ""
+      {{- end }}
+      db: {{ .Values.redis.external.database }}
+      {{- else }}
+      addr: "localhost:6379"
+      password: ""
+      db: 0
+      {{- end }}
+
+    # Pod configuration
+    pod:
+      {{- if .Values.pod.region }}
+      region: {{ .Values.pod.region | quote }}
+      {{- else }}
+      region: ""
+      {{- end }}
+
+    # Logging configuration
+    log:
+      level: {{ .Values.server.logLevel | quote }}
+
+  flexible_recorder_config.yaml: |
+    # Server configuration
+    health_port: {{ .Values.flexibleRecorder.service.healthPort }}
+
+    # Redis configuration
+    redis:
+      {{- if .Values.redis.external.enabled }}
+      addr: "{{ .Values.redis.external.host }}:{{ .Values.redis.external.port }}"
+      {{- if .Values.redis.external.password }}
+      password: {{ .Values.redis.external.password | quote }}
+      {{- else }}
+      password: ""
+      {{- end }}
+      db: {{ .Values.redis.external.database }}
+      {{- else }}
+      addr: "localhost:6379"
+      password: ""
+      db: 0
+      {{- end }}
+
+    # Web recorder configuration
+    web_recorder:
+      base_url: {{ .Values.flexibleRecorder.webRecorder.baseUrl | quote }}
+      timeout: {{ .Values.flexibleRecorder.webRecorder.timeout }}
+
+    # Pod configuration
+    pod:
+      {{- if .Values.pod.region }}
+      region: {{ .Values.pod.region | quote }}
+      {{- else }}
+      region: ""
+      {{- end }}
+      workers: {{ .Values.flexibleRecorder.workers }}
+
+    # Logging configuration
+    log:
+      level: {{ .Values.server.logLevel | quote }}
+
+  webhook_notifier_config.yaml: |
+    # Server configuration
+    server:
+      port: {{ .Values.webhookNotifier.service.targetPort }}
+      health_port: {{ .Values.webhookNotifier.service.healthPort }}
+      log_level: {{ .Values.server.logLevel | quote }}
+
+    # Redis configuration
+    redis:
+      {{- if .Values.redis.external.enabled }}
+      addr: "{{ .Values.redis.external.host }}:{{ .Values.redis.external.port }}"
+      {{- if .Values.redis.external.password }}
+      password: {{ .Values.redis.external.password | quote }}
+      {{- else }}
+      password: ""
+      {{- end }}
+      db: {{ .Values.redis.external.database }}
+      {{- else }}
+      addr: "localhost:6379"
+      password: ""
+      db: 0
+      {{- end }}
+
+    # Pod configuration
+    pod:
+      {{- if .Values.pod.region }}
+      region: {{ .Values.pod.region | quote }}
+      {{- else }}
+      region: ""
+      {{- end }}
+
+    # Webhook configuration
+    webhooks:
+      enabled: {{ .Values.webhookNotifier.webhooks.enabled }}
+      endpoints: {{ .Values.webhookNotifier.webhooks.endpoints | toJson }}

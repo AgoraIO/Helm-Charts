@@ -325,6 +325,17 @@ Each service provides health endpoints:
 - Uploader: `http://pod-ip:8194/health`
 - Webhook Notifier: `http://pod-ip:8195/health`
 
+### Configuration Files and Env Overrides
+
+- Config files are mounted at `'/opt/rtc_egress/config'` for all services:
+  - `egress_config.yaml`
+  - `uploader_config.yaml`
+  - `api_server_config.yaml`
+  - `flexible_recorder_config.yaml`
+  - `webhook_notifier_config.yaml`
+- Environment variables are also set for critical parameters (e.g., `REDIS_ADDR`, `HEALTH_PORT`, `API_PORT`, etc.).
+- Applications using Viper or similar generally allow environment variables to override config file values. This chart provides both so you can manage defaults via ConfigMap and override via Helm values/envs without rebuilding images.
+
 ### Monitoring Commands
 
 ```bash

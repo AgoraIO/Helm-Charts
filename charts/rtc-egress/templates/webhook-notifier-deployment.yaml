@@ -104,6 +104,10 @@ spec:
             - name: config
               mountPath: /opt/rtc_egress/config
               readOnly: true
+            # Mount also at /opt/config for binaries expecting this path
+            - name: config
+              mountPath: /opt/config
+              readOnly: true
       
       volumes:
         - name: config
