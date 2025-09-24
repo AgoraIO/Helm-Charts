@@ -87,12 +87,8 @@ spec:
               value: {{ .Values.s3.endpoint | quote }}
             {{- end }}
             {{- end }}
-            - name: CONFIG_DIR
-              value: {{ .Values.config.dir | quote }}
-            {{- if .Values.config.file }}
             - name: CONFIG_FILE
-              value: {{ .Values.config.file | quote }}
-            {{- end }}
+              value: "/opt/rtc_egress/config/uploader_config.yaml"
             {{- with .Values.env }}
             {{- toYaml . | nindent 12 }}
             {{- end }}

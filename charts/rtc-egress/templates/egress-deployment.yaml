@@ -86,12 +86,8 @@ spec:
               value: {{ .Values.agora.channelName | quote }}
             - name: AGORA_EGRESS_UID
               value: {{ .Values.agora.egressUid | quote }}
-            - name: CONFIG_DIR
-              value: {{ .Values.config.dir | quote }}
-            {{- if .Values.config.file }}
             - name: CONFIG_FILE
-              value: {{ .Values.config.file | quote }}
-            {{- end }}
+              value: "/opt/rtc_egress/config/egress_config.yaml"
             {{- with .Values.env }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
