@@ -44,10 +44,17 @@ Full values.yaml:
 ```bash
 helm install my-rtc-egress agora/rtc-egress \
     --namespace myrtc-egress \
-    --set agora.appId=$AGORA_APP_ID \
-    --set redis.external.host=$REDIS_HOST \
-    --set redis.external.port=$REDIS_PORT \
-    --set image.tag=$IMAGE_TAG \
+    --set-string agora.appId="$AGORA_APP_ID" \
+    --set-string redis.external.host="$REDIS_HOST" \
+    --set-string redis.external.port="$REDIS_PORT" \
+    --set s3.enabled=true \
+    --set-string s3.bucket="$S3_BUCKET" \
+    --set-string s3.region="$S3_REGION" \
+    --set-string s3.accessKey="$S3_ACCESS_KEY" \
+    --set-string s3.secretKey="$S3_SECRET_KEY" \
+    --set-string s3.endpoint="$S3_ENDPOINT" \
+    --set-string webhookNotifier.webhook.url="$WEBHOOK_URL" \
+    --set-string image.tag="$IMAGE_TAG" \
     --set 'global.imagePullSecrets[0].name=ghcr-secret'
 ```
 
@@ -66,12 +73,20 @@ kubectl logs -n myrtc-egress my-rtc-egress-69b7b86d5b-sfzcq
 
 If you want to upgrade the chart:
 ```bash
-helm upgrade my-rtc-egress ./charts/rtc-egress \
+helm upgrade --install my-rtc-egress agora/rtc-egress \
+    --reuse-values \
     --namespace myrtc-egress \
-    --set agora.appId=$AGORA_APP_ID \
-    --set redis.external.host=$REDIS_HOST \
-    --set redis.external.port=$REDIS_PORT \
-    --set image.tag=$IMAGE_TAG \
+    --set-string agora.appId="$AGORA_APP_ID" \
+    --set-string redis.external.host="$REDIS_HOST" \
+    --set-string redis.external.port="$REDIS_PORT" \
+    --set s3.enabled=true \
+    --set-string s3.bucket="$S3_BUCKET" \
+    --set-string s3.region="$S3_REGION" \
+    --set-string s3.accessKey="$S3_ACCESS_KEY" \
+    --set-string s3.secretKey="$S3_SECRET_KEY" \
+    --set-string s3.endpoint="$S3_ENDPOINT" \
+    --set-string webhookNotifier.webhook.url="$WEBHOOK_URL" \
+    --set-string image.tag="$IMAGE_TAG" \
     --set 'global.imagePullSecrets[0].name=ghcr-secret'
 ```
 

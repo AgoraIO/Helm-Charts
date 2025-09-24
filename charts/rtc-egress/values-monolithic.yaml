@@ -39,10 +39,6 @@ monolithic:
         port: 8182
         targetPort: 8182
         protocol: TCP
-      canvas:
-        port: 3000
-        targetPort: 3000
-        protocol: TCP
   resources:
     limits:
       cpu: 2000m
@@ -75,10 +71,6 @@ service:
     health:
       port: 8182
       targetPort: 8182
-      protocol: TCP
-    canvas:
-      port: 3000
-      targetPort: 3000
       protocol: TCP
 
 resources:

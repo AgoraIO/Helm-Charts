@@ -23,8 +23,9 @@ data:
     egress_home: "/tmp/egress"
 
     # Server configuration
-    health_port: {{ .Values.egress.service.healthPort }}
-    api_port: {{ .Values.server.apiPort }}
+    server:
+      health_port: {{ .Values.egress.service.healthPort }}
+      api_port: {{ .Values.server.apiPort }}
 
     # Redis Configuration
     redis:
@@ -43,8 +44,16 @@ data:
       {{- end }}
       task_ttl: 172800
       worker_patterns:
+        {{- if .Values.egress.redis.workerPatterns }}
+        {{- range .Values.egress.redis.workerPatterns }}
+        - "{{ . }}"
+        {{- end }}
+        {{- else }}
         - "egress:snapshot:*"
         - "egress:record:*"
+        - "egress:*:snapshot:*"
+        - "egress:*:record:*"
+        {{- end }}
 
     # Pod Configuration
     pod:
@@ -129,7 +138,8 @@ data:
 
   uploader_config.yaml: |
     # Health server configuration
-    health_port: {{ .Values.uploader.service.healthPort }}
+    server:
+      health_port: {{ .Values.uploader.service.healthPort }}
 
     # Directories to watch for uploads
     watcher:
@@ -191,7 +201,8 @@ data:
 
   flexible_recorder_config.yaml: |
     # Server configuration
-    health_port: {{ .Values.flexibleRecorder.service.healthPort }}
+    server:
+      health_port: {{ .Values.flexibleRecorder.service.healthPort }}
 
     # Redis configuration
     redis:
@@ -203,6 +214,16 @@ data:
       password: ""
       {{- end }}
       db: {{ .Values.redis.external.database }}
+      # Queue patterns this service should handle
+      worker_patterns:
+      {{- if .Values.flexibleRecorder.redis.workerPatterns }}
+      {{- range .Values.flexibleRecorder.redis.workerPatterns }}
+        - "{{ . }}"
+      {{- end }}
+      {{- else }}
+        - "egress:*:web:*"  # Regional web recording tasks
+        - "egress:web:*"    # Global web recording tasks
+      {{- end }}
       {{- else }}
       addr: "localhost:6379"
       password: ""

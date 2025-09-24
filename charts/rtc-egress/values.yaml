@@ -69,6 +69,12 @@ egress:
     pullPolicy: Always
   replicaCount: 3
   workers: 4
+  redis:
+    workerPatterns:
+      - "egress:snapshot:*"       # Global snapshot tasks
+      - "egress:record:*"         # Global recording tasks
+      - "egress:*:snapshot:*"     # Regional snapshot tasks
+      - "egress:*:record:*"       # Regional recording tasks
   service:
     type: ClusterIP
     healthPort: 8192
@@ -92,6 +98,10 @@ flexibleRecorder:
     pullPolicy: Always
   replicaCount: 2
   workers: 1
+  redis:
+    workerPatterns:
+      - "egress:web:*"          # Global web recording tasks
+      - "egress:*:web:*"        # Regional web recording tasks
   service:
     type: ClusterIP
     healthPort: 8193
