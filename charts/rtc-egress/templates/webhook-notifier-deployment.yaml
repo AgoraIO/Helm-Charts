@@ -86,6 +86,8 @@ spec:
               value: {{ .Values.server.logLevel | quote }}
             - name: POD_REGION
               value: {{ .Values.pod.region | quote }}
+            - name: WEBHOOK_URL
+              value: {{ .Values.webhookNotifier.webhook.url | quote }}
             - name: CONFIG_DIR
               value: {{ .Values.config.dir | quote }}
             {{- if .Values.config.file }}

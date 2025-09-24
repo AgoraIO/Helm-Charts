@@ -148,6 +148,8 @@ webhookNotifier:
     port: 8080
     targetPort: 8080
     healthPort: 8195
+  webhook:
+    url: "http://localhost:9999/webhook"
   resources:
     limits:
       cpu: 300m

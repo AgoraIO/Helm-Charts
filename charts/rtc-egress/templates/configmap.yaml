@@ -132,7 +132,7 @@ data:
     health_port: {{ .Values.uploader.service.healthPort }}
 
     # Directories to watch for uploads
-    watch:
+    watcher:
       directories:
         - {{ .Values.persistence.recordings.mountPath | quote }}
         - {{ (.Values.uploader.webRecorder.mountPath | default "/web_recorder") | quote }}
@@ -230,9 +230,7 @@ data:
   webhook_notifier_config.yaml: |
     # Server configuration
     server:
-      port: {{ .Values.webhookNotifier.service.targetPort }}
       health_port: {{ .Values.webhookNotifier.service.healthPort }}
-      log_level: {{ .Values.server.logLevel | quote }}
 
     # Redis configuration
     redis:
@@ -259,6 +257,5 @@ data:
       {{- end }}
 
     # Webhook configuration
-    webhooks:
-      enabled: {{ .Values.webhookNotifier.webhooks.enabled }}
-      endpoints: {{ .Values.webhookNotifier.webhooks.endpoints | toJson }}
+    webhook:
+      url: {{ .Values.webhookNotifier.webhook.url | quote }}
