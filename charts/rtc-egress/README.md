@@ -8,11 +8,11 @@ The suite supports **two deployment architectures**:
 
 ### Production Architecture (Separated - Recommended)
 
-- **API Server**: 1 pod (default) - HTTP API that publishes tasks to Redis queues (port 8080, health 8181)
+- **API Server**: 1 pod (default) - HTTP API that publishes tasks to Redis queues (port 8080, health 8191)
 - **Egress**: 3 pods (default) with auto-scaling - Native C++ recording/snapshot workers (health port 8192)
 - **Flexible Recorder**: 2 pods (default) - Web recording via web recorder engine (health port 8193)
 - **Uploader**: 1 pod (default) - File upload service with S3 integration (health port 8194)
-- **Webhook Notifier**: 2 pods (default) with auto-scaling - Redis keyspace notifications → HTTP webhooks (port 8080, health 8195)
+- **Webhook Notifier**: 2 pods (default) with auto-scaling - Redis keyspace notifications → HTTP webhooks (health 8195)
 
 ### Monolithic Architecture (Legacy)
 
@@ -359,7 +359,7 @@ helm install rtc-egress agora/rtc-egress \
 ### Health Checks
 
 Each service provides health endpoints:
-- API Server: `http://pod-ip:8181/health`
+- API Server: `http://pod-ip:8191/health`
 - Egress: `http://pod-ip:8192/health`
 - Flexible Recorder: `http://pod-ip:8193/health`
 - Uploader: `http://pod-ip:8194/health`

@@ -1,4 +1,47 @@
-1. Get the application URL by running these commands:
+{{- if eq .Values.architecture "separated" }}
+
+1. Access the API Server (port-forward)
+   kubectl --namespace {{ .Release.Namespace }} port-forward svc/{{ include "rtc-egress.fullname" . }}-api-server 8080:8080
+   curl http://localhost:8080/health
+
+2. Check health endpoints (per service)
+   # API Server
+   kubectl --namespace {{ .Release.Namespace }} port-forward svc/{{ include "rtc-egress.fullname" . }}-api-server 8191:8191
+   curl http://localhost:8191/health
+
+   # Egress workers
+   kubectl --namespace {{ .Release.Namespace }} port-forward svc/{{ include "rtc-egress.fullname" . }}-egress 8192:8192
+   curl http://localhost:8192/health
+
+   # Flexible Recorder
+   kubectl --namespace {{ .Release.Namespace }} port-forward svc/{{ include "rtc-egress.fullname" . }}-flexible-recorder 8193:8193
+   curl http://localhost:8193/health
+
+   # Uploader
+   kubectl --namespace {{ .Release.Namespace }} port-forward svc/{{ include "rtc-egress.fullname" . }}-uploader 8194:8194
+   curl http://localhost:8194/health
+
+   # Webhook Notifier (health-only; no inbound API)
+   kubectl --namespace {{ .Release.Namespace }} port-forward svc/{{ include "rtc-egress.fullname" . }}-webhook-notifier 8195:8195
+   curl http://localhost:8195/health
+
+3. Configuration quick refs
+   - Agora App ID: {{ .Values.agora.appId }}
+   {{- if .Values.redis.external.enabled }}
+   - Redis: {{ .Values.redis.external.host }}:{{ .Values.redis.external.port }} (db {{ .Values.redis.external.database }})
+   {{- end }}
+   {{- if .Values.persistence.enabled }}
+   - Recordings: {{ .Values.persistence.recordings.mountPath }}, Snapshots: {{ .Values.persistence.snapshots.mountPath }}
+   {{- end }}
+
+4. Monitoring
+   kubectl get pods -n {{ .Release.Namespace }} -l app.kubernetes.io/name={{ include "rtc-egress.name" . }}
+   kubectl get hpa -n {{ .Release.Namespace }}
+   kubectl logs -n {{ .Release.Namespace }} -l app.kubernetes.io/component=api-server -f
+
+{{- else }}
+
+1. Get the application URL
 {{- if .Values.ingress.enabled }}
 {{- range $host := .Values.ingress.hosts }}
   {{- range .paths }}
@@ -10,62 +53,22 @@
   export NODE_IP=$(kubectl get nodes --namespace {{ .Release.Namespace }} -o jsonpath="{.items[0].status.addresses[0].address}")
   echo http://$NODE_IP:$NODE_PORT
 {{- else if contains "LoadBalancer" .Values.service.type }}
-     NOTE: It may take a few minutes for the LoadBalancer IP to be available.
-           You can watch the status of by running 'kubectl get --namespace {{ .Release.Namespace }} svc -w {{ include "rtc-egress.fullname" . }}'
   export SERVICE_IP=$(kubectl get svc --namespace {{ .Release.Namespace }} {{ include "rtc-egress.fullname" . }} --template "{{"{{ range (index .status.loadBalancer.ingress 0) }}{{.}}{{ end }}"}}")
   echo http://$SERVICE_IP:{{ .Values.service.ports.api.port }}
-{{- else if contains "ClusterIP" .Values.service.type }}
-  export POD_NAME=$(kubectl get pods --namespace {{ .Release.Namespace }} -l "{{ include "rtc-egress.selectorLabels" . }}" -o jsonpath="{.items[0].metadata.name}")
-  export CONTAINER_PORT=$(kubectl get pod --namespace {{ .Release.Namespace }} $POD_NAME -o jsonpath="{.spec.containers[0].ports[0].containerPort}")
-  echo "Visit http://127.0.0.1:8080 to use your application"
-  kubectl --namespace {{ .Release.Namespace }} port-forward $POD_NAME 8080:$CONTAINER_PORT
+{{- else }}
+  kubectl --namespace {{ .Release.Namespace }} port-forward svc/{{ include "rtc-egress.fullname" . }} 8080:{{ .Values.service.ports.api.port }}
+  echo http://127.0.0.1:8080
 {{- end }}
 
-2. Check the health status:
-{{- if contains "ClusterIP" .Values.service.type }}
+2. Check health
   kubectl --namespace {{ .Release.Namespace }} port-forward svc/{{ include "rtc-egress.fullname" . }} 8182:{{ .Values.service.ports.health.port }}
   curl http://localhost:8182/health
-{{- else }}
-  # Use the appropriate URL from step 1, but replace the port with {{ .Values.service.ports.health.port }}
+
+3. Monitoring
+  kubectl get pods -n {{ .Release.Namespace }} -l {{ include "rtc-egress.selectorLabels" . }}
+  kubectl logs -n {{ .Release.Namespace }} -l {{ include "rtc-egress.selectorLabels" . }} -f
+
 {{- end }}
-
-3. Access the web canvas interface:
-{{- if contains "ClusterIP" .Values.service.type }}
-  kubectl --namespace {{ .Release.Namespace }} port-forward svc/{{ include "rtc-egress.fullname" . }} 3000:{{ .Values.service.ports.canvas.port }}
-  open http://localhost:3000
-{{- else }}
-  # Use the appropriate URL from step 1, but replace the port with {{ .Values.service.ports.canvas.port }}
-{{- end }}
-
-4. Configuration:
-   - Your Agora App ID: {{ .Values.agora.appId }}
-   {{- if .Values.redis.external.enabled }}
-   - Redis connection: {{ .Values.redis.external.host }}:{{ .Values.redis.external.port }}
-   {{- end }}
-   {{- if .Values.persistence.enabled }}
-   - Recordings will be stored in: {{ .Values.persistence.recordings.mountPath }}
-   - Snapshots will be stored in: {{ .Values.persistence.snapshots.mountPath }}
-   {{- end }}
-
-5. API Usage:
-   Start a recording session:
-   curl -X POST http://localhost:8080/egress/v1/task/start \
-     -H "Content-Type: application/json" \
-     -d '{
-       "channelName": "your-channel",
-       "accessToken": "your-token",
-       "egressUid": "42",
-       "layout": "flat"
-     }'
-
-   Stop a recording session:
-   curl -X POST http://localhost:8080/egress/v1/task/stop \
-     -H "Content-Type: application/json" \
-     -d '{"taskId": "your-task-id"}'
-
-6. Monitoring:
-   Check pod status: kubectl get pods -n {{ .Release.Namespace }} -l {{ include "rtc-egress.selectorLabels" . }}
-   View logs: kubectl logs -n {{ .Release.Namespace }} -l {{ include "rtc-egress.selectorLabels" . }} -f
 
 {{- if not .Values.agora.appId }}
 

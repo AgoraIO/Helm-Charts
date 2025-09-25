@@ -40,9 +40,6 @@ spec:
           image: "{{ .Values.global.imageRegistry | default .Values.webhookNotifier.image.registry }}/{{ .Values.webhookNotifier.image.repository }}:{{ .Values.webhookNotifier.image.tag | default .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.webhookNotifier.image.pullPolicy }}
           ports:
-            - name: http
-              containerPort: {{ .Values.webhookNotifier.service.targetPort }}
-              protocol: TCP
             - name: health
               containerPort: {{ .Values.webhookNotifier.service.healthPort }}
               protocol: TCP
@@ -78,8 +75,6 @@ spec:
             {{- end }}
             
             # Server Configuration
-            - name: SERVER_PORT
-              value: {{ .Values.webhookNotifier.service.targetPort | quote }}
             - name: HEALTH_PORT
               value: {{ .Values.webhookNotifier.service.healthPort | quote }}
             - name: LOG_LEVEL

@@ -48,7 +48,7 @@ apiServer:
   service:
     type: ClusterIP
     port: 8080
-    healthPort: 8181
+    healthPort: 8191
   resources:
     limits:
       cpu: 500m
@@ -155,8 +155,6 @@ webhookNotifier:
   replicaCount: 2
   service:
     type: ClusterIP
-    port: 8080
-    targetPort: 8080
     healthPort: 8195
   webhook:
     url: "http://localhost:9999/webhook"

@@ -180,7 +180,7 @@ Use this guide when proposing changes, diagnosing issues, or updating docs.
 - Resolution order (already implemented in binaries):
   `CONFIG_FILE` > `--config` > `CONFIG_DIR/<file>` > search `./config`, `/opt/rtc_egress/config`, `/etc/rtc_egress`.
   Services log the chosen path and fail fast if none found.
-- Health ports (defaults, value‑driven): API 8181; Egress 8192; Flexible 8193; Uploader 8194; Notifier 8195.
+- Health ports (defaults, value‑driven): API 8191; Egress 8192; Flexible 8193; Uploader 8194; Notifier 8195.
 - Redis worker patterns are rendered from values into config; defaults include global + regional patterns.
 - S3: Helm-only toggle `s3.enabled`; code reads s3.bucket/region/keys/endpoint (no `enabled` key in YAML required).
 

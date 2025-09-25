@@ -37,7 +37,7 @@ Key design points to keep in sync with the code:
   - `webhook_notifier_config.yaml`
 - Config resolution (in binaries): `CONFIG_FILE` > `--config` > `CONFIG_DIR/<file>` > search `./config`, `/opt/rtc_egress/config`, `/etc/rtc_egress`. The process logs the path used and fails fast if none found.
 - Health ports are value‑driven:
-  - API 8181, Egress 8192, Flexible 8193, Uploader 8194, Notifier 8195
+  - API 8191, Egress 8192, Flexible 8193, Uploader 8194, Notifier 8195
 - Queue subscription patterns are rendered from values into config:
   - Defaults include both global and regional patterns.
 

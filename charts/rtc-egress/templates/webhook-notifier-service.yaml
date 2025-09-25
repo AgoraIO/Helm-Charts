@@ -9,10 +9,10 @@ metadata:
 spec:
   type: {{ .Values.webhookNotifier.service.type }}
   ports:
-    - port: {{ .Values.webhookNotifier.service.port }}
-      targetPort: {{ .Values.webhookNotifier.service.targetPort }}
+    - port: {{ .Values.webhookNotifier.service.healthPort }}
+      targetPort: health
       protocol: TCP
-      name: http
+      name: health
   selector:
     {{- include "rtc-egress.selectorLabels" . | nindent 4 }}
     app.kubernetes.io/component: webhook-notifier
