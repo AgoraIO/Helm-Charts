@@ -28,9 +28,9 @@ All services run in a single container - simpler but less flexible for scaling a
 
 ## Installing the Chart
 
-### Production Installation (Separated Architecture)
+Below are minimal examples with the updated, mandatory parameters. Adjust names, namespaces and values as needed.
 
-For production with the recommended separated 5-service architecture:
+### Production (Separated, Recommended)
 
 ```bash
 # Add the Agora Helm repository
@@ -40,38 +40,53 @@ helm repo update
 # Create namespace
 kubectl create namespace rtc-egress-prod
 
-# Install with production values (1 api-server, 3 egress, 2 flexible-recorder, 1 uploader, 2 webhook-notifier)
+# Install with production values
 helm install rtc-egress agora/rtc-egress \
   --namespace rtc-egress-prod \
   --values values-production-separated.yaml \
-  --set agora.appId=YOUR_AGORA_APP_ID \
-  --set redis.external.host=YOUR_REDIS_HOST \
-  --set s3.bucket=YOUR_S3_BUCKET
+  --set-string image.tag="$IMAGE_TAG" \
+  --set-string agora.appId="$AGORA_APP_ID" \
+  --set-string redis.external.host="$REDIS_HOST" \
+  --set-string redis.external.port="$REDIS_PORT" \
+  --set-string webhookNotifier.webhook.url="$WEBHOOK_URL" \
+  --set s3.enabled=true \
+  --set-string s3.bucket="$S3_BUCKET" \
+  --set-string s3.region="$S3_REGION" \
+  --set-string s3.accessKey="$S3_ACCESS_KEY" \
+  --set-string s3.secretKey="$S3_SECRET_KEY" \
+  --set-string s3.endpoint="$S3_ENDPOINT"
 ```
 
-### Development Installation
+Notes:
+- `image.tag` applies to all services unless an individual tag is set.
+- Set `webhookNotifier.webhook.url` to your webhook receiver.
+- If your Redis requires auth, also set `redis.external.password` and optionally `redis.external.database`.
 
-For development or testing:
+### Development (Separated)
 
 ```bash
-# Install with default values (separated architecture - uses values.yaml automatically)
+# Default values (values.yaml) with required overrides
 helm install my-rtc-egress agora/rtc-egress \
   --namespace rtc-egress-dev \
-  --set agora.appId=YOUR_AGORA_APP_ID \
-  --set redis.external.host=YOUR_REDIS_HOST
+  --create-namespace \
+  --set-string image.tag="$IMAGE_TAG" \
+  --set-string agora.appId="$AGORA_APP_ID" \
+  --set-string redis.external.host="$REDIS_HOST" \
+  --set-string redis.external.port="$REDIS_PORT" \
+  --set-string webhookNotifier.webhook.url="$WEBHOOK_URL"
 ```
 
-### Monolithic Installation (Legacy Mode)
-
-For backward compatibility or simpler deployments:
+### Monolithic (Legacy)
 
 ```bash
-# Install in monolithic mode (single container with all services)
 helm install rtc-egress-mono agora/rtc-egress \
   --namespace rtc-egress-mono \
+  --create-namespace \
   --values values-monolithic.yaml \
-  --set agora.appId=YOUR_AGORA_APP_ID \
-  --set redis.external.host=YOUR_REDIS_HOST
+  --set-string image.tag="$IMAGE_TAG" \
+  --set-string agora.appId="$AGORA_APP_ID" \
+  --set-string redis.external.host="$REDIS_HOST" \
+  --set-string redis.external.port="$REDIS_PORT"
 ```
 
 ### Private Registry Installation
@@ -90,9 +105,10 @@ kubectl create secret docker-registry ghcr-secret \
 helm install my-rtc-egress agora/rtc-egress \
   --namespace rtc-egress \
   --create-namespace \
-  --set agora.appId=$AGORA_APP_ID \
-  --set redis.external.host=$REDIS_HOST \
-  --set redis.external.port=$REDIS_PORT \
+  --set-string image.tag="$IMAGE_TAG" \
+  --set-string agora.appId="$AGORA_APP_ID" \
+  --set-string redis.external.host="$REDIS_HOST" \
+  --set-string redis.external.port="$REDIS_PORT" \
   --set 'global.imagePullSecrets[0].name=ghcr-secret'
 ```
 
@@ -103,17 +119,41 @@ helm install my-rtc-egress agora/rtc-egress \
 git clone https://github.com/AgoraIO/Helm-Charts.git
 cd Helm-Charts
 
-# Install the chart
+# Install the chart from source
 helm install my-rtc-egress ./charts/rtc-egress \
   --namespace rtc-egress \
   --create-namespace \
-  --set agora.appId=YOUR_AGORA_APP_ID \
-  --set redis.external.host=YOUR_REDIS_HOST
+  --set-string image.tag="$IMAGE_TAG" \
+  --set-string agora.appId="$AGORA_APP_ID" \
+  --set-string redis.external.host="$REDIS_HOST" \
+  --set-string redis.external.port="$REDIS_PORT" \
+  --set-string webhookNotifier.webhook.url="$WEBHOOK_URL"
 ```
 
 ## Configuration
 
 The chart supports both **separated** and **monolithic** architectures.
+
+### Mandatory Parameters
+
+Set these values for a functional deployment. You can pass them via `--set ...`, a values file, or environment-specific tooling.
+
+- Agora
+  - `agora.appId` (required)
+  - `agora.accessToken` (optional; required if your RTC flow enforces tokens)
+- Redis
+  - `redis.external.host` (required)
+  - `redis.external.port` (required)
+  - `redis.external.password` (if your Redis requires auth)
+  - `redis.external.database` (defaults to `0`)
+- Webhook Notifier
+  - `webhookNotifier.webhook.url` (required if `webhookNotifier.enabled=true`)
+- Uploader (S3)
+  - `s3.enabled=true` (chart toggle)
+  - `s3.bucket`, `s3.region`, `s3.accessKey`, `s3.secretKey` (required for uploader)
+  - `s3.endpoint` (optional, for non‑AWS S3 endpoints)
+
+For development without uploader, you may leave `s3.enabled=false`.
 
 ### Values Files
 
@@ -327,14 +367,14 @@ Each service provides health endpoints:
 
 ### Configuration Files and Env Overrides
 
-- Config files are mounted at `'/opt/rtc_egress/config'` for all services:
+- Config files are mounted at `'/opt/rtc_egress/config'` for all services and each Deployment sets `CONFIG_FILE` to the correct file:
   - `egress_config.yaml`
   - `uploader_config.yaml`
   - `api_server_config.yaml`
   - `flexible_recorder_config.yaml`
   - `webhook_notifier_config.yaml`
-- Environment variables are also set for critical parameters (e.g., `REDIS_ADDR`, `HEALTH_PORT`, `API_PORT`, etc.).
-- Applications using Viper or similar generally allow environment variables to override config file values. This chart provides both so you can manage defaults via ConfigMap and override via Helm values/envs without rebuilding images.
+- Resolution order (per service): `CONFIG_FILE` > `--config` > `CONFIG_DIR/<service>_config.yaml` > search `./config`, `/opt/rtc_egress/config`, `/etc/rtc_egress`. The process logs the file it uses and fails fast if none is found.
+- Environment variables for critical parameters (e.g., `REDIS_ADDR`, `HEALTH_PORT`, `API_PORT`, `WEBHOOK_URL`, S3 envs) override config file values.
 
 ### Monitoring Commands
 
@@ -429,4 +469,10 @@ helm install my-rtc-egress agora/rtc-egress \
   --namespace rtc-egress \
   --set image.tag=2025-09-19-775b285 \
   --set agora.appId=$AGORA_APP_ID \
-  --set redis.external.host=$REDIS_HOST
+  --set redis.external.host=$REDIS_HOST \
+  --set redis.external.port=$REDIS_PORT \
+  --set s3.enabled=true \
+  --set s3.bucket=YOUR_BUCKET \
+  --set s3.region=YOUR_REGION \
+  --set s3.accessKey=YOUR_ACCESS_KEY \
+  --set s3.secretKey=YOUR_SECRET_KEY

@@ -29,16 +29,16 @@ helm.agora.build → your-github-username.github.io
 
 The repository includes two workflows:
 
-- **`.github/workflows/release.yml`**: Publishes charts to GitHub Pages on push to main
-- **`.github/workflows/lint-test.yml`**: Validates charts on pull requests
+- `.github/workflows/lint-test.yml`: Validates charts on pull requests and pushes
+- `.github/workflows/release.yml`: Packages charts from `charts/*`, builds an index, and publishes to GitHub Pages (`gh-pages`) so `https://helm.agora.build` serves the repository index and packages.
 
 ### 4. Chart Versioning
 
 For the release workflow to work properly:
 
 1. **Bump chart version** in `charts/*/Chart.yaml` when making changes
-2. **Create Git tags** following semantic versioning (e.g., `rtc-egress-1.0.1`)
-3. **Push to main branch** to trigger the release workflow
+2. **Push to main branch** to trigger the release workflow (it will package all charts under `charts/`)
+3. Optionally create Git tags for app releases; the chart is versioned via `Chart.yaml`.
 
 Example version bump:
 ```yaml
@@ -72,8 +72,8 @@ After the first successful run:
 helm repo add agora https://helm.agora.build
 helm repo update
 
-# Search for charts
-helm search repo agora
+# Search for charts and versions
+helm search repo agora/rtc-egress --versions | head
 
 # Install a chart
 helm install my-egress agora/rtc-egress --set agora.appId=YOUR_APP_ID

@@ -14,18 +14,23 @@ helm repo add agora https://helm.agora.build
 helm repo update
 ```
 
+## Who is this for?
+
+- If you want to deploy and use the chart → see Chart User Docs below.
+- If you want to modify, package, and publish the chart → see Chart Developer Docs below.
+
 ## Available Charts
 
 | Chart | Description | Version |
 |-------|-------------|---------|
-| [rtc-egress](./charts/rtc-egress) | Real-time video recording, snapshot service and more | 1.0.0 |
+| [rtc-egress](./charts/rtc-egress) | Real-time egress (recording, snapshots, web recording, upload, webhooks) | see Chart.yaml |
 
-## Installing Charts
+## Chart User Docs (Install & Operate)
 
 ### RTC Egress
 
 ```bash
-# Create the secret for private registry
+# Create the secret for private registry (if needed)
 kubectl create secret docker-registry ghcr-secret \
     --docker-server=ghcr.io \
     --docker-username=YOUR_GITHUB_USERNAME \
@@ -88,6 +93,8 @@ helm upgrade --install my-rtc-egress agora/rtc-egress \
     --set-string webhookNotifier.webhook.url="$WEBHOOK_URL" \
     --set-string image.tag="$IMAGE_TAG" \
     --set 'global.imagePullSecrets[0].name=ghcr-secret'
+
+See `charts/rtc-egress/README.md` for mandatory parameters, configuration files, and architecture details.
 ```
 
 If you want to uninstall the chart:
@@ -95,33 +102,17 @@ If you want to uninstall the chart:
 helm uninstall my-rtc-egress -n myrtc-egress
 ```
 
-## Development(Chart Maintainer)
+## Chart Developer Docs (Build & Publish)
 
-### Prerequisites
-
-- [Helm](https://helm.sh/docs/intro/install/) v3.0+
-- [chart-testing](https://github.com/helm/chart-testing) (for testing)
-
-### Testing Charts Locally
-
-```bash
-# Lint charts
-ct lint --all
-
-# Install charts in kind cluster
-ct install --all
-```
-
-### Adding New Charts
-
-1. Create a new directory under `charts/`
-2. Follow the [Helm chart best practices](https://helm.sh/docs/chart_best_practices/)
-3. Ensure your chart passes linting and testing
-4. Submit a pull request
+See the [DEVELOPERS.md](docs/DEVELOPERS.md) for:
+- Local development and linting
+- Versioning and release to GitHub Pages (https://helm.agora.build)
+- How images are tagged and consumed by the chart
+- Security/secrets guidance
 
 ## Repository Setup(Repository Admin)
 
-To enable `https://helm.agora.build`, see the [REPOSITORY-SETUP.md](REPOSITORY-SETUP.md) guide for configuring GitHub Pages and Actions.
+To enable `https://helm.agora.build`, see the [REPOSITORY-SETUP.md](docs/REPOSITORY-SETUP.md) guide for configuring GitHub Pages and Actions.
 
 ## Contributing
 

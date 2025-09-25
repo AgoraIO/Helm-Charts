@@ -122,6 +122,10 @@ For `egress` and `flexibleRecorder` services:
 - ServiceMonitor for metrics collection
 - Custom metrics API server
 
+Note:
+- Ensure your service subscribes to the same Redis queue namespace that the HPA watches.
+- The chart renders `redis.worker_patterns` into each service config (defaults include both global and regional patterns). HPA examples above use patterns like `egress:record:*` and `egress:web:*` — keep them consistent with your `worker_patterns`.
+
 ### 4. Monitoring Scaling Activities
 
 ```bash
