@@ -47,6 +47,8 @@ helm install my-rtc-egress agora/rtc-egress -f my-values.yaml
 Full values.yaml:
 
 ```bash
+# Add when installing from a private registry:
+# --set 'global.imagePullSecrets[0].name=ghcr-secret'
 helm install my-rtc-egress agora/rtc-egress \
     --namespace myrtc-egress \
     --set-string agora.appId="$AGORA_APP_ID" \
@@ -61,9 +63,6 @@ helm install my-rtc-egress agora/rtc-egress \
     --set-string webhookNotifier.webhook.url="$WEBHOOK_URL" \
     --set-string image.tag="$IMAGE_TAG"
 ```
-
-please add secret when install from private registry
---set 'global.imagePullSecrets[0].name=ghcr-secret'
 
 
 ```bash

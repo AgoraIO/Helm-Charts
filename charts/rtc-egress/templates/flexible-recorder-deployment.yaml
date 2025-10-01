@@ -39,7 +39,13 @@ spec:
         - name: flexible-recorder
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
-          image: "{{ .Values.global.imageRegistry | default .Values.flexibleRecorder.image.registry }}/{{ .Values.flexibleRecorder.image.repository }}:{{ .Values.flexibleRecorder.image.tag | default .Values.image.tag | default .Chart.AppVersion }}"
+          {{- $imageRegistry := .Values.flexibleRecorder.image.registry }}
+          {{- with .Values.global }}
+          {{- if .imageRegistry }}
+          {{- $imageRegistry = .imageRegistry }}
+          {{- end }}
+          {{- end }}
+          image: "{{ $imageRegistry }}/{{ .Values.flexibleRecorder.image.repository }}:{{ .Values.flexibleRecorder.image.tag | default .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.flexibleRecorder.image.pullPolicy }}
           ports:
             - name: health
