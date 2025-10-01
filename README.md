@@ -59,9 +59,12 @@ helm install my-rtc-egress agora/rtc-egress \
     --set-string s3.secretKey="$S3_SECRET_KEY" \
     --set-string s3.endpoint="$S3_ENDPOINT" \
     --set-string webhookNotifier.webhook.url="$WEBHOOK_URL" \
-    --set-string image.tag="$IMAGE_TAG" \
-    --set 'global.imagePullSecrets[0].name=ghcr-secret'
+    --set-string image.tag="$IMAGE_TAG"
 ```
+
+please add secret when install from private registry
+--set 'global.imagePullSecrets[0].name=ghcr-secret'
+
 
 ```bash
 helm list -n myrtc-egress
@@ -92,8 +95,7 @@ helm upgrade --install my-rtc-egress agora/rtc-egress \
     --set-string s3.secretKey="$S3_SECRET_KEY" \
     --set-string s3.endpoint="$S3_ENDPOINT" \
     --set-string webhookNotifier.webhook.url="$WEBHOOK_URL" \
-    --set-string image.tag="$IMAGE_TAG" \
-    --set 'global.imagePullSecrets[0].name=ghcr-secret'
+    --set-string image.tag="$IMAGE_TAG"
 
 See `charts/rtc-egress/README.md` for mandatory parameters, configuration files, and architecture details.
 ```
