@@ -31,6 +31,7 @@ helm repo update
 
 ```bash
 # Create the secret for private registry (if needed)
+# Delete with: kubectl -n myrtc-egress delete secret ghcr-secret
 kubectl create secret docker-registry ghcr-secret \
     --docker-server=ghcr.io \
     --docker-username=YOUR_GITHUB_USERNAME \
@@ -81,6 +82,7 @@ kubectl logs -n myrtc-egress my-rtc-egress-69b7b86d5b-sfzcq
 
 If you want to upgrade the chart:
 ```bash
+# See `charts/rtc-egress/README.md` for mandatory parameters, configuration files, and architecture details.
 helm upgrade --install my-rtc-egress agora/rtc-egress \
     --reuse-values \
     --namespace myrtc-egress \
@@ -95,8 +97,6 @@ helm upgrade --install my-rtc-egress agora/rtc-egress \
     --set-string s3.endpoint="$S3_ENDPOINT" \
     --set-string webhookNotifier.webhook.url="$WEBHOOK_URL" \
     --set-string image.tag="$IMAGE_TAG"
-
-See `charts/rtc-egress/README.md` for mandatory parameters, configuration files, and architecture details.
 ```
 
 If you want to uninstall the chart:

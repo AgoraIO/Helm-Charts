@@ -76,7 +76,6 @@ spec:
               value: {{ .Values.server.apiPort | quote }}
             - name: HEALTH_PORT
               value: {{ .Values.server.healthPort | quote }}
-            # CANVAS_TEMPLATE_PORT removed
             - name: LOG_LEVEL
               value: {{ .Values.server.logLevel | quote }}
             - name: POD_REGION
