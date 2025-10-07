@@ -21,7 +21,7 @@
    kubectl --namespace {{ .Release.Namespace }} port-forward svc/{{ include "rtc-egress.fullname" . }}-uploader 8194:8194
    curl http://localhost:8194/health
 
-   # Webhook Notifier (health-only; no inbound API)
+   # Webhook Notifier
    kubectl --namespace {{ .Release.Namespace }} port-forward svc/{{ include "rtc-egress.fullname" . }}-webhook-notifier 8195:8195
    curl http://localhost:8195/health
 
