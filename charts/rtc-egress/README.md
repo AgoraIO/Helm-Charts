@@ -107,6 +107,7 @@ helm install my-rtc-egress agora/rtc-egress \
   --create-namespace \
   --set-string image.tag="$IMAGE_TAG" \
   --set-string agora.appId="$AGORA_APP_ID" \
+  --set redis.external.enabled=true \
   --set-string redis.external.host="$REDIS_HOST" \
   --set-string redis.external.port="$REDIS_PORT" \
   --set 'global.imagePullSecrets[0].name=ghcr-secret'
@@ -125,6 +126,7 @@ helm install my-rtc-egress ./charts/rtc-egress \
   --create-namespace \
   --set-string image.tag="$IMAGE_TAG" \
   --set-string agora.appId="$AGORA_APP_ID" \
+  --set redis.external.enabled=true \
   --set-string redis.external.host="$REDIS_HOST" \
   --set-string redis.external.port="$REDIS_PORT" \
   --set-string webhookNotifier.webhook.url="$WEBHOOK_URL"

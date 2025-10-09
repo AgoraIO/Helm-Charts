@@ -53,6 +53,7 @@ Full values.yaml:
 helm install my-rtc-egress agora/rtc-egress \
     --namespace myrtc-egress \
     --set-string agora.appId="$AGORA_APP_ID" \
+    --set redis.external.enabled=true \
     --set-string redis.external.host="$REDIS_HOST" \
     --set-string redis.external.port="$REDIS_PORT" \
     --set s3.enabled=true \
@@ -87,6 +88,7 @@ helm upgrade --install my-rtc-egress agora/rtc-egress \
     --reuse-values \
     --namespace myrtc-egress \
     --set-string agora.appId="$AGORA_APP_ID" \
+    --set redis.external.enabled=true \
     --set-string redis.external.host="$REDIS_HOST" \
     --set-string redis.external.port="$REDIS_PORT" \
     --set s3.enabled=true \
