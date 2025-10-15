@@ -6,18 +6,56 @@ architecture: "monolithic"
 # Disable all separated services
 apiServer:
   enabled: false
+  server:
+    region: ""
+    taskTtl: 172800
 
 egress:
   enabled: false
+  server:
+    region: ""
+    workers: 4
+    taskTtl: 172800
+    workerPatterns:
+      - "egress:snapshot:*"
+      - "egress:record:*"
+      - "egress:*:snapshot:*"
+      - "egress:*:record:*"
 
 flexibleRecorder:
   enabled: false
+  server:
+    region: ""
+    workers: 1
+    taskTtl: 172800
+    workerPatterns:
+      - "egress:web:*"
+      - "egress:*:web:*"
 
 uploader:
   enabled: false
+  server:
+    region: ""
 
 webhookNotifier:
   enabled: false
+  server:
+    region: ""
+  webhook:
+    url: "http://localhost:9999/webhook"
+    timeout: 30
+    maxRetries: 5
+    baseRetryInterval: 15
+    maxRetryInterval: 300
+    authToken: ""
+    notifyStates:
+      - "PROCESSING"
+      - "STOPPED"
+      - "FAILED"
+      - "TIMEOUT"
+    deliveredTtl: 172800
+  server:
+    region: ""
 
 # Monolithic service configuration
 monolithic:
@@ -87,15 +125,6 @@ autoscaling:
   maxReplicas: 10
   targetCPUUtilizationPercentage: 70
   targetMemoryUtilizationPercentage: 80
-
-# Redis defaults for monolithic mode
-redis:
-  taskTtl: 172800
-
-# Pod configuration for monolithic mode
-pod:
-  region: ""
-  workers: 4
 
 # Server configuration
 server:

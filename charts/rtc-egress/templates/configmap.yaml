@@ -26,6 +26,22 @@ data:
     server:
       health_port: {{ .Values.egress.service.healthPort }}
       api_port: {{ .Values.server.apiPort }}
+      {{- if .Values.egress.server.region }}
+      region: {{ .Values.egress.server.region | quote }}
+      {{- else }}
+      region: ""
+      {{- end }}
+      workers: {{ .Values.egress.server.workers }}
+      task_ttl: {{ default 172800 .Values.egress.server.taskTtl }}
+      worker_patterns:
+        {{- range .Values.egress.server.workerPatterns }}
+        - "{{ . }}"
+        {{- else }}
+        - "egress:snapshot:*"
+        - "egress:record:*"
+        - "egress:*:snapshot:*"
+        - "egress:*:record:*"
+        {{- end }}
 
     # Redis Configuration
     redis:
@@ -42,27 +58,6 @@ data:
       password: ""
       db: 0
       {{- end }}
-      task_ttl: {{ .Values.redis.taskTtl | default 172800 }}
-      worker_patterns:
-        {{- if .Values.egress.redis.workerPatterns }}
-        {{- range .Values.egress.redis.workerPatterns }}
-        - "{{ . }}"
-        {{- end }}
-        {{- else }}
-        - "egress:snapshot:*"
-        - "egress:record:*"
-        - "egress:*:snapshot:*"
-        - "egress:*:record:*"
-        {{- end }}
-
-    # Pod Configuration
-    pod:
-      {{- if .Values.pod.region }}
-      region: {{ .Values.pod.region | quote }}
-      {{- else }}
-      region: ""
-      {{- end }}
-      workers: {{ .Values.pod.workers }}
 
     {{- if .Values.s3.enabled }}
     # S3 Configuration
@@ -140,6 +135,11 @@ data:
     # Health server configuration
     server:
       health_port: {{ .Values.uploader.service.healthPort }}
+      {{- if .Values.uploader.server.region }}
+      region: {{ .Values.uploader.server.region | quote }}
+      {{- else }}
+      region: ""
+      {{- end }}
 
     # Directories to watch for uploads
     watcher:
@@ -168,8 +168,15 @@ data:
 
   api_server_config.yaml: |
     # Server configuration
-    api_port: {{ .Values.apiServer.service.port }}
-    health_port: {{ .Values.apiServer.service.healthPort }}
+    server:
+      port: {{ .Values.apiServer.service.port }}
+      health_port: {{ .Values.apiServer.service.healthPort }}
+      {{- if .Values.apiServer.server.region }}
+      region: {{ .Values.apiServer.server.region | quote }}
+      {{- else }}
+      region: ""
+      {{- end }}
+      task_ttl: {{ default 172800 .Values.apiServer.server.taskTtl }}
 
     # Redis configuration
     redis:
@@ -185,15 +192,6 @@ data:
       addr: "localhost:6379"
       password: ""
       db: 0
-      {{- end }}
-      task_ttl: {{ .Values.redis.taskTtl | default 172800 }}
-
-    # Pod configuration
-    pod:
-      {{- if .Values.pod.region }}
-      region: {{ .Values.pod.region | quote }}
-      {{- else }}
-      region: ""
       {{- end }}
 
     # Logging configuration
@@ -204,6 +202,20 @@ data:
     # Server configuration
     server:
       health_port: {{ .Values.flexibleRecorder.service.healthPort }}
+      {{- if .Values.flexibleRecorder.server.region }}
+      region: {{ .Values.flexibleRecorder.server.region | quote }}
+      {{- else }}
+      region: ""
+      {{- end }}
+      workers: {{ .Values.flexibleRecorder.server.workers }}
+      task_ttl: {{ default 172800 .Values.flexibleRecorder.server.taskTtl }}
+      worker_patterns:
+        {{- range .Values.flexibleRecorder.server.workerPatterns }}
+        - "{{ . }}"
+        {{- else }}
+        - "egress:*:web:*"  # Regional web recording tasks
+        - "egress:web:*"    # Global web recording tasks
+        {{- end }}
 
     # Redis configuration
     redis:
@@ -215,36 +227,16 @@ data:
       password: ""
       {{- end }}
       db: {{ .Values.redis.external.database }}
-      # Queue patterns this service should handle
-      worker_patterns:
-      {{- if .Values.flexibleRecorder.redis.workerPatterns }}
-      {{- range .Values.flexibleRecorder.redis.workerPatterns }}
-        - "{{ . }}"
-      {{- end }}
-      {{- else }}
-        - "egress:*:web:*"  # Regional web recording tasks
-        - "egress:web:*"    # Global web recording tasks
-      {{- end }}
       {{- else }}
       addr: "localhost:6379"
       password: ""
       db: 0
       {{- end }}
-      task_ttl: {{ .Values.redis.taskTtl | default 172800 }}
 
     # Web recorder configuration
     web_recorder:
       base_url: {{ .Values.flexibleRecorder.webRecorder.baseUrl | quote }}
       timeout: {{ .Values.flexibleRecorder.webRecorder.timeout }}
-
-    # Pod configuration
-    pod:
-      {{- if .Values.pod.region }}
-      region: {{ .Values.pod.region | quote }}
-      {{- else }}
-      region: ""
-      {{- end }}
-      workers: {{ .Values.flexibleRecorder.workers }}
 
     # Logging configuration
     log:
@@ -254,6 +246,11 @@ data:
     # Server configuration
     server:
       health_port: {{ .Values.webhookNotifier.service.healthPort }}
+      {{- if .Values.webhookNotifier.server.region }}
+      region: {{ .Values.webhookNotifier.server.region | quote }}
+      {{- else }}
+      region: ""
+      {{- end }}
 
     # Redis configuration
     redis:
@@ -270,16 +267,18 @@ data:
       password: ""
       db: 0
       {{- end }}
-      task_ttl: {{ .Values.redis.taskTtl | default 172800 }}
-
-    # Pod configuration
-    pod:
-      {{- if .Values.pod.region }}
-      region: {{ .Values.pod.region | quote }}
-      {{- else }}
-      region: ""
-      {{- end }}
 
     # Webhook configuration
     webhook:
       url: {{ .Values.webhookNotifier.webhook.url | quote }}
+      timeout: {{ .Values.webhookNotifier.webhook.timeout | default 30 }}
+      max_retries: {{ .Values.webhookNotifier.webhook.maxRetries | default 5 }}
+      base_retry_interval: {{ .Values.webhookNotifier.webhook.baseRetryInterval | default 15 }}
+      max_retry_interval: {{ .Values.webhookNotifier.webhook.maxRetryInterval | default 300 }}
+      auth_token: {{ .Values.webhookNotifier.webhook.authToken | quote }}
+      notify_states:
+        {{- $states := .Values.webhookNotifier.webhook.notifyStates | default (list "PROCESSING" "STOPPED" "FAILED" "TIMEOUT") }}
+        {{- range $states }}
+        - "{{ . }}"
+        {{- end }}
+      delivered_ttl: {{ .Values.webhookNotifier.webhook.deliveredTtl | default 172800 }}

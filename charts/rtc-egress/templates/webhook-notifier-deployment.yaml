@@ -87,8 +87,8 @@ spec:
               value: {{ .Values.webhookNotifier.service.healthPort | quote }}
             - name: LOG_LEVEL
               value: {{ .Values.server.logLevel | quote }}
-            - name: POD_REGION
-              value: {{ .Values.pod.region | quote }}
+            - name: SERVER_REGION
+              value: {{ .Values.webhookNotifier.server.region | quote }}
             - name: WEBHOOK_URL
               value: {{ .Values.webhookNotifier.webhook.url | quote }}
             - name: CONFIG_FILE

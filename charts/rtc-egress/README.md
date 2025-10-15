@@ -261,8 +261,8 @@ For development without uploader, you may leave `s3.enabled=false`.
 | `server.apiPort` | API server port | `8080` |
 | `server.healthPort` | Health check port | `8182` |
 | `server.logLevel` | Log level | `debug` (dev), `info` (prod) |
-| `pod.region` | Pod region identifier | `""` |
-| `pod.workers` | Number of worker processes | `4` |
+| `server.region` | Server region identifier | `""` |
+| `server.workers` | Number of worker processes | `4` |
 
 ### Persistence Configuration
 

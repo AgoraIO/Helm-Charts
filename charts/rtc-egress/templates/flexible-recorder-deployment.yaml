@@ -78,10 +78,10 @@ spec:
               value: {{ .Values.redis.external.database | quote }}
             - name: HEALTH_PORT
               value: {{ .Values.flexibleRecorder.service.healthPort | quote }}
-            - name: POD_REGION
-              value: {{ .Values.pod.region | quote }}
-            - name: POD_WORKERS
-              value: {{ .Values.flexibleRecorder.workers | quote }}
+            - name: SERVER_REGION
+              value: {{ .Values.flexibleRecorder.server.region | quote }}
+            - name: SERVER_WORKERS
+              value: {{ .Values.flexibleRecorder.server.workers | quote }}
             - name: WEB_RECORDER_BASE_URL
               value: {{ .Values.flexibleRecorder.webRecorder.baseUrl | quote }}
             - name: WEB_RECORDER_TIMEOUT

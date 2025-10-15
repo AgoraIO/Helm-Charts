@@ -78,10 +78,10 @@ spec:
               value: {{ .Values.server.healthPort | quote }}
             - name: LOG_LEVEL
               value: {{ .Values.server.logLevel | quote }}
-            - name: POD_REGION
-              value: {{ .Values.pod.region | quote }}
-            - name: POD_WORKERS
-              value: {{ .Values.pod.workers | quote }}
+            - name: SERVER_REGION
+              value: {{ .Values.egress.server.region | quote }}
+            - name: SERVER_WORKERS
+              value: {{ .Values.egress.server.workers | quote }}
             - name: AGORA_APP_ID
               value: {{ .Values.agora.appId | quote }}
             - name: AGORA_ACCESS_TOKEN

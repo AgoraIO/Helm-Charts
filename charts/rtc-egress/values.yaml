@@ -49,6 +49,9 @@ apiServer:
     type: ClusterIP
     port: 8080
     healthPort: 8191
+  server:
+    region: ""
+    taskTtl: 172800
   resources:
     limits:
       cpu: 500m
@@ -68,8 +71,10 @@ egress:
     tag: "latest"
     pullPolicy: Always
   replicaCount: 3
-  workers: 4
-  redis:
+  server:
+    region: ""
+    workers: 4
+    taskTtl: 172800
     workerPatterns:
       - "egress:snapshot:*"       # Global snapshot tasks
       - "egress:record:*"         # Global recording tasks
@@ -97,8 +102,10 @@ flexibleRecorder:
     tag: "latest"
     pullPolicy: Always
   replicaCount: 2
-  workers: 1
-  redis:
+  server:
+    region: ""
+    workers: 1
+    taskTtl: 172800
     workerPatterns:
       - "egress:web:*"          # Global web recording tasks
       - "egress:*:web:*"        # Regional web recording tasks
@@ -130,6 +137,8 @@ uploader:
   service:
     type: ClusterIP
     healthPort: 8194
+  server:
+    region: ""
   resources:
     limits:
       cpu: 500m
@@ -156,8 +165,21 @@ webhookNotifier:
   service:
     type: ClusterIP
     healthPort: 8195
+  server:
+    region: ""
   webhook:
     url: "http://localhost:9999/webhook"
+    timeout: 30
+    maxRetries: 5
+    baseRetryInterval: 15
+    maxRetryInterval: 300
+    authToken: ""
+    notifyStates:
+      - "PROCESSING"
+      - "STOPPED"
+      - "FAILED"
+      - "TIMEOUT"
+    deliveredTtl: 172800
   resources:
     limits:
       cpu: 300m
@@ -219,10 +241,6 @@ s3:
   endpoint: ""
 
 # Development settings
-pod:
-  region: ""
-  workers: 4
-
 server:
   ginMode: "debug"
   apiPort: 8080

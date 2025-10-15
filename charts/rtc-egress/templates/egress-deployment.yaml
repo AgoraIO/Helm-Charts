@@ -82,10 +82,10 @@ spec:
               value: {{ .Values.redis.external.database | quote }}
             - name: HEALTH_PORT
               value: {{ .Values.egress.service.healthPort | quote }}
-            - name: POD_REGION
-              value: {{ .Values.pod.region | quote }}
-            - name: POD_WORKERS
-              value: {{ .Values.egress.workers | quote }}
+            - name: SERVER_REGION
+              value: {{ .Values.egress.server.region | quote }}
+            - name: SERVER_WORKERS
+              value: {{ .Values.egress.server.workers | quote }}
             - name: AGORA_APP_ID
               value: {{ .Values.agora.appId | quote }}
             - name: AGORA_ACCESS_TOKEN

@@ -20,6 +20,9 @@ apiServer:
     repository: agoraio/rtc-egress/api-server
     tag: "latest"
     pullPolicy: Always
+  server:
+    region: "us-west-2"
+    taskTtl: 172800
   resources:
     limits:
       cpu: 1000m
@@ -38,12 +41,20 @@ apiServer:
 egress:
   enabled: true
   replicaCount: 3
-  workers: 4
   image:
     registry: ghcr.io
     repository: agoraio/rtc-egress/egress
     tag: "latest"
     pullPolicy: Always
+  server:
+    region: "us-west-2"
+    workers: 4
+    taskTtl: 172800
+    workerPatterns:
+      - "egress:snapshot:*"
+      - "egress:record:*"
+      - "egress:*:snapshot:*"
+      - "egress:*:record:*"
   resources:
     limits:
       cpu: 4000m
@@ -62,23 +73,23 @@ egress:
       queueName: "egress:record:*"
       targetQueueLength: "5"  # Scale up faster in production
   # Queue subscription patterns for native workers (global + regional)
-  redis:
-    workerPatterns:
-      - "egress:snapshot:*"
-      - "egress:record:*"
-      - "egress:*:snapshot:*"
-      - "egress:*:record:*"
 
 # Flexible Recorder Service Configuration (2 instances with autoscaling)
 flexibleRecorder:
   enabled: true
   replicaCount: 2
-  workers: 2
   image:
     registry: ghcr.io
     repository: agoraio/rtc-egress/flexible-recorder
     tag: "latest"
     pullPolicy: Always
+  server:
+    region: "us-west-2"
+    workers: 2
+    taskTtl: 172800
+    workerPatterns:
+      - "egress:web:*"
+      - "egress:*:web:*"
   resources:
     limits:
       cpu: 2000m
@@ -90,10 +101,6 @@ flexibleRecorder:
     baseUrl: "http://web-recorder-service:8001"
     timeout: 60  # Longer timeout for production
   # Queue subscription patterns for web recorder (global + regional)
-  redis:
-    workerPatterns:
-      - "egress:web:*"
-      - "egress:*:web:*"
   autoscaling:
     enabled: true
     minReplicas: 2
@@ -127,6 +134,8 @@ uploader:
     maxReplicas: 4
     targetCPUUtilizationPercentage: 70
     targetMemoryUtilizationPercentage: 80
+  server:
+    region: "us-west-2"
 
 # Webhook Notifier Service Configuration (2 instances with autoscaling)
 webhookNotifier:
@@ -150,13 +159,25 @@ webhookNotifier:
     maxReplicas: 8
     targetCPUUtilizationPercentage: 70
     targetMemoryUtilizationPercentage: 80
+  server:
+    region: "us-west-2"
   # REQUIRED: set your webhook endpoint URL
   webhook:
     url: ""  # e.g., http://webhook-receiver.yourns.svc.cluster.local:8080/webhook
+    timeout: 30
+    maxRetries: 5
+    baseRetryInterval: 15
+    maxRetryInterval: 300
+    authToken: ""
+    notifyStates:
+      - "PROCESSING"
+      - "STOPPED"
+      - "FAILED"
+      - "TIMEOUT"
+    deliveredTtl: 172800
 
 # Production Redis Configuration
 redis:
-  taskTtl: 172800
   external:
     enabled: true
     host: "redis-cluster.production.svc.cluster.local"
@@ -203,10 +224,6 @@ s3:
 podDisruptionBudget:
   enabled: true
   minAvailable: 50%  # Ensure at least half pods available during updates
-
-# Production pod settings
-pod:
-  region: "us-west-2"
 
 # Production server settings
 server:
