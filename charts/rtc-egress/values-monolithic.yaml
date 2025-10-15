@@ -88,6 +88,10 @@ autoscaling:
   targetCPUUtilizationPercentage: 70
   targetMemoryUtilizationPercentage: 80
 
+# Redis defaults for monolithic mode
+redis:
+  taskTtl: 172800
+
 # Pod configuration for monolithic mode
 pod:
   region: ""

@@ -156,6 +156,7 @@ webhookNotifier:
 
 # Production Redis Configuration
 redis:
+  taskTtl: 172800
   external:
     enabled: true
     host: "redis-cluster.production.svc.cluster.local"

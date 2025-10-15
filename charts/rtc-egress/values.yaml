@@ -173,6 +173,7 @@ webhookNotifier:
 
 # Development Redis Configuration
 redis:
+  taskTtl: 172800
   external:
     enabled: true
     host: "localhost"

@@ -42,7 +42,7 @@ data:
       password: ""
       db: 0
       {{- end }}
-      task_ttl: 172800
+      task_ttl: {{ .Values.redis.taskTtl | default 172800 }}
       worker_patterns:
         {{- if .Values.egress.redis.workerPatterns }}
         {{- range .Values.egress.redis.workerPatterns }}
@@ -186,6 +186,7 @@ data:
       password: ""
       db: 0
       {{- end }}
+      task_ttl: {{ .Values.redis.taskTtl | default 172800 }}
 
     # Pod configuration
     pod:
@@ -229,6 +230,7 @@ data:
       password: ""
       db: 0
       {{- end }}
+      task_ttl: {{ .Values.redis.taskTtl | default 172800 }}
 
     # Web recorder configuration
     web_recorder:
@@ -268,6 +270,7 @@ data:
       password: ""
       db: 0
       {{- end }}
+      task_ttl: {{ .Values.redis.taskTtl | default 172800 }}
 
     # Pod configuration
     pod:
